@@ -29,7 +29,9 @@ unit SGJ.ToogleButton;
 //{$DEFINE SGJCTRL_W_GDIPlUS}
 {$ELSE}
 //{$DEFINE SGJCTRL_W_Canvas}
-  {$DEFINE SGJCTRL_W_D2D}
+{$IF CompilerVersion >= 21}
+	{$DEFINE SGJCTRL_W_D2D}
+{$IFEND}
   {$DEFINE SGJCTRL_W_GDIPlUS}
 {$ENDIF}
 interface
