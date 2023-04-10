@@ -6,10 +6,15 @@ TSGJLinkLabel - Label with URL property. URL is auto executed when label click w
 TSGJPanel - Custom Panel with or without border. 
 
 TSGJButton - Panel based button with image.
+
               - Image
+              
               - Border with selected color, or without border
+              
               - Custom button color
+              
               - Text left or center
+              
               - Single line text or Title with Description (2 lines)
               
 TSGJToogleButton - Toogle button, modern checkbox replacement.
