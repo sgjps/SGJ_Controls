@@ -18,3 +18,5 @@ TSGJButton - Panel based button with image.
               - Single line text or Title with Description (2 lines)
               
 TSGJToogleButton - Toogle button, modern checkbox replacement.
+
+![Demo](https://github.com/sgjps/SGJ_Controls/blob/main/Images/SGJControls.jpg)
