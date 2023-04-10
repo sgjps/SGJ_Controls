@@ -23,11 +23,15 @@
 { $DEFINE SGJCTRL_W_GDIPlUS - then switch to GDIPLUS                 }
 {********************************************************************}
 unit SGJ.ToogleButton;
+{$IFDEF FPC}
+  {$DEFINE SGJCTRL_W_BGRA}
 //{$DEFINE SGJCTRL_W_Canvas}
-//{$DEFINE SGJCTRL_W_D2D}
-{$DEFINE SGJCTRL_W_GDIPlUS}
-//{$DEFINE SGJCTRL_W_BGRA}
-
+//{$DEFINE SGJCTRL_W_GDIPlUS}
+{$ELSE}
+//{$DEFINE SGJCTRL_W_Canvas}
+  {$DEFINE SGJCTRL_W_D2D}
+  {$DEFINE SGJCTRL_W_GDIPlUS}
+{$ENDIF}
 interface
 
 uses
