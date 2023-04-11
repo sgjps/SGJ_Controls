@@ -82,6 +82,7 @@ uses
         property Font;
         property OnClick;
         property Color;
+		property Align;
 end;
 
 
