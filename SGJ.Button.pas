@@ -28,7 +28,7 @@ uses
 {$ENDIF}
   Classes, SysUtils, Controls, ExtCtrls, Graphics, Forms, Messages, Types, ImgList;
 
-
+Type
   TSGJButton = class(TCustomPanel)
     public
 	    fNormalColor: TColor;
