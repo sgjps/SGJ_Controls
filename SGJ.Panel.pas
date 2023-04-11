@@ -39,7 +39,7 @@ type
   published
           property Title: String read FTitle write ftitle;
           property BorderColor: TColor read fBorderColor write fBorderColor;
-		      property ShowBorder: boolean read fShowBorder write fShowBorder;
+		  property ShowBorder: boolean read fShowBorder write fShowBorder;
   end;
 
 procedure Register;
@@ -83,9 +83,9 @@ begin
       Brush.Style := bsSolid;
 	  
 	  if self.ShowBorder then
-	  begin
-	  if Self.Title<>'' then
-	  begin
+		begin
+			if Self.Title<>'' then
+			begin
       //left
       Canvas.MoveTo(1,(TextHeight(Self.Title)div 2)+1);
       Canvas.LineTo(1,self.height-1);
@@ -107,8 +107,8 @@ begin
       Canvas.LineTo(Self.width-3,self.height-1);
 	  end
 	  else begin
-    Canvas.Brush.Color:=self.Color;
-    Canvas.RoundRect(1,1,width-2,height-2,4,7) ;
+		Canvas.Brush.Color:=self.Color;
+		Canvas.RoundRect(2,2,Self.width-2,Self.height-2,4,4) ;
     end;
 	  end;
    end;
