@@ -31,7 +31,7 @@ uses
 Type
   TSGJButton = class(TCustomPanel)
     public
-	    fNormalColor: TColor;
+	fNormalColor: TColor;
         fHoverColor:TColor;
         fTitle : string;
         fImages: TCustomImageList;
@@ -44,13 +44,12 @@ Type
         fBorderColor: TColor;
         fCenterTitle: boolean;
         procedure SetTitle(ATitle: String);
-      constructor Create(AOwner: TComponent); override;
-      destructor Destroy; override;
-      procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
-      procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
-      procedure Paint; override;
+      	constructor Create(AOwner: TComponent); override;
+      	destructor Destroy; override;
+      	procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
+      	procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
+      	procedure Paint; override;
     private
-        FSettings: TSGJButtonSettings;
         procedure PaintButton(AMouseMove: Boolean);
         {$IFDEF FPC}
         procedure PaintButtonBGRA(AMouseMove: Boolean);
@@ -385,8 +384,5 @@ begin
   FreeAndNil(fDescriptionFont);
   inherited Destroy;
 end;
-
-
-
 end.
 
