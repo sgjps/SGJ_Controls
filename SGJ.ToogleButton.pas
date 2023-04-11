@@ -18,7 +18,7 @@
 { Define only one from this settings. Only this one is used          }
 { Exception:                                                         }
 { $DEFINE SGJCTRL_W_D2D     - Use Direct2D (if D2D is unsupported)   }
-{                                                                    }
+{                             then Canvas is Used                                       }
 { $DEFINE SGJCTRL_W_D2D     - If D2D is unsupported                  }
 { $DEFINE SGJCTRL_W_GDIPlUS - then switch to GDIPLUS                 }
 {********************************************************************}
