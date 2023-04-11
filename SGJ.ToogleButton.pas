@@ -17,8 +17,8 @@
 {                                                                    }
 { Define only one from this settings. Only this one is used          }
 { Exception:                                                         }
-{ $DEFINE SGJCTRL_W_D2D     - Use Direct2D (if D2D is unsupported    }
-{                             then Canvas is Used                    }
+{ $DEFINE SGJCTRL_W_D2D     - Use Direct2D (if D2D is unsupported)   }
+{                                                                    }
 { $DEFINE SGJCTRL_W_D2D     - If D2D is unsupported                  }
 { $DEFINE SGJCTRL_W_GDIPlUS - then switch to GDIPLUS                 }
 {********************************************************************}
@@ -50,8 +50,7 @@ uses
 {$IFDEF SGJCTRL_W_BGRA}
   bgrabitmap, BGRABitmapTypes,
 {$ENDIF}
-  Forms, Messages, Classes, Graphics, ExtCtrls, Controls;
-
+  Forms, Messages, Classes, Graphics, ExtCtrls, Controls,StdCtrls;
 
 type
   TSGJToogleButton = class(TCustomPanel)
@@ -68,6 +67,7 @@ type
     fButtonColor: TColor;
     FButtonCheckedColor: TColor;
     FButtonUnCheckedColor: TColor;
+    procedure SetChecked(AChecked: boolean);
     procedure Paint_Canvas();
     {$IFDEF MSWINDOWS}
     {$IFDEF SGJCTRL_W_GDIPlUS}
@@ -87,14 +87,13 @@ type
     property ParentBackground;
     property ParentColor;
     property Title: string read FTitle write ftitle;
-    property Checked: boolean read fChecked write fChecked;
+    property Checked: boolean read fChecked write SetChecked;
     property TextBeforeButton: boolean read fTextBefore write fTextBefore;
     property ButtonColor: TColor read fButtonColor write fButtonColor;
     property ButtonCheckedColor: TColor read FButtonCheckedColor
-      write FButtonCheckedColor;
-    property ButtonUnCheckedColor: TColor read FButtonUnCheckedColor
+      write FButtonCheckedColor;                                                                                                             property ButtonUnCheckedColor: TColor read FButtonUnCheckedColor
       write FButtonUnCheckedColor;
-    procedure SetChecked(AChecked: boolean);
+    property OnClick;
   end;
 
 procedure Register;
@@ -104,6 +103,16 @@ implementation
 procedure Register;
 begin
   RegisterComponents('SGJ', [TSGJToogleButton]);
+end;
+
+procedure TSGJToogleButton.SetChecked(AChecked: boolean);
+begin
+  if fChecked<>AChecked then
+  if AChecked = True then
+    fChecked:=true
+  else
+    fChecked:=false;
+  Paint;
 end;
 
 function GetCircleRect(X, Y: integer; Radius: integer): TRect;
@@ -154,14 +163,6 @@ begin
   Paint;
 end;
 
-procedure TSGJToogleButton.SetChecked(AChecked: boolean);
-begin
-  if AChecked = True then
-    fChecked := True
-  else
-    fChecked := False;
-  Paint;
-end;
 
 {$Region 'Canvas'}
 procedure TSGJToogleButton.Paint_Canvas();
