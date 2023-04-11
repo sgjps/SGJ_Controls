@@ -29,13 +29,9 @@ uses
   Classes, SysUtils, Controls, ExtCtrls, Graphics, Forms, Messages, Types, ImgList;
 
 
- type
-  TSGJButton = class;
-  TSGJButtonSettings = class;
-
-  TSGJButtonSettings  = class(TPersistent)
-    private
-        fNormalColor: TColor;
+  TSGJButton = class(TCustomPanel)
+    public
+	    fNormalColor: TColor;
         fHoverColor:TColor;
         fTitle : string;
         fImages: TCustomImageList;
@@ -47,25 +43,7 @@ uses
         fRoundedCorners: boolean;
         fBorderColor: TColor;
         fCenterTitle: boolean;
-      public
-        constructor Create(AControl: TSGJButton);
-     published
-        //property Canvas;
-        property Description: String read fDesc write fDesc;
-        property ColorNormal: TColor read fNormalColor write fNormalColor;
-        property ColorHover: TColor read fHoverColor write fHoverColor;
-        property Title: String read FTitle write ftitle;
-        property Images: TCustomImageList read fImages write fImages;
-        property ImageIndex: Integer read fImageIndex write fImageIndex default -1;
-        property ShowDescription: boolean read fShowDescription write fShowDescription;
-        property FontDescription: TFont read fDescriptionFont write fDescriptionFont;
-        property ShowBorder: boolean read fShowBorder write fShowBorder;
-        property BorderColor: TColor read fBorderColor write fBorderColor;
-        property RoundedCorners: Boolean read fRoundedCorners write fRoundedCorners;
-        property TitleOnCenter: Boolean read fCenterTitle write fCenterTitle;
-  end;
-  TSGJButton = class(TCustomPanel)
-    public
+        procedure SetTitle(ATitle: String);
       constructor Create(AOwner: TComponent); override;
       destructor Destroy; override;
       procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
@@ -78,13 +56,23 @@ uses
         procedure PaintButtonBGRA(AMouseMove: Boolean);
         {$ENDIF}
     published
-        property ButtonSettings:TSGJButtonSettings read FSettings write FSettings;
+        property Description: String read fDesc write fDesc;
+        property ColorNormal: TColor read fNormalColor write fNormalColor;
+        property ColorHover: TColor read fHoverColor write fHoverColor;
+        property Title: String read FTitle write SetTitle;
+        property Images: TCustomImageList read fImages write fImages;
+        property ImageIndex: Integer read fImageIndex write fImageIndex default -1;
+        property ShowDescription: boolean read fShowDescription write fShowDescription;
+        property FontDescription: TFont read fDescriptionFont write fDescriptionFont;
+        property ShowBorder: boolean read fShowBorder write fShowBorder;
+        property BorderColor: TColor read fBorderColor write fBorderColor;
+        property RoundedCorners: Boolean read fRoundedCorners write fRoundedCorners;
+        property TitleOnCenter: Boolean read fCenterTitle write fCenterTitle;
         property Font;
         property OnClick;
         property Color;
 		property Align;
 end;
-
 
 procedure Register;
 
@@ -96,13 +84,12 @@ begin
   RegisterComponents('SGJ', [TSGJButton]);
 end;
 
-constructor TSGJButtonSettings.Create(AControl: TSGJButton);
+procedure TSGJButton.SetTitle(ATitle: String);
 begin
-  inherited Create;
-  fDescriptionFont := TFont.Create;
-  fNormalColor:=clBtnFace;
-  fHoverColor:= clSilver;
+   fTitle:=ATitle;
+   Paint;
 end;
+
 
 constructor TSGJButton.Create(AOwner: TComponent);
 begin
@@ -119,8 +106,7 @@ begin
   Height:=32;
   ParentBackground:=false;
 
-  fSettings:=TSGJButtonSettings.Create(self);
-  color:=fSettings.fNormalColor;
+  color:=fNormalColor;
 
 end;
 
@@ -145,73 +131,73 @@ begin
     LCanvas.Font.Style:=Font.Style;
 
     if not AMouseMove then begin
-      LCanvas.Brush.Color:=fSettings.fNormalColor;
-      LCanvas.Pen.Color:=fSettings.fNormalColor;
+      LCanvas.Brush.Color:=fNormalColor;
+      LCanvas.Pen.Color:=fNormalColor;
     end
     else
     begin
-      LCanvas.Brush.Color:=fSettings.fHoverColor;
-      LCanvas.Pen.Color:=fSettings.fHoverColor;
+      LCanvas.Brush.Color:=fHoverColor;
+      LCanvas.Pen.Color:=fHoverColor;
     end;
 
-   if fSettings.fRoundedCorners then
+   if fRoundedCorners then
     LCanvas.roundrect(0,0,width,height,10,10)
    else
     LCanvas.Rectangle(0,0,width,height);
 
-       if fSettings.fShowBorder then
+       if fShowBorder then
        begin
-        LCanvas.Pen.Color:=fSettings.fBorderColor;
-        if not fSettings.fRoundedCorners then
+        LCanvas.Pen.Color:=fBorderColor;
+        if not fRoundedCorners then
           LCanvas.Rectangle(0,0,width,height)
           else
           LCanvas.roundrect(0,0,width,height,10,10)
        end;
 
-   if (fSettings.fImages<>nil)
+   if (fImages<>nil)
        then
        begin
-        if (fSettings.fImageIndex <> -1) and (fSettings.fImageIndex < fSettings.fImages.Count)
+        if (fImageIndex <> -1) and (fImageIndex < fImages.Count)
           then
             begin
-            //fSettings.fImages.Draw(Canvas,8,(height  div 2) - (fSettings.fImages.Height div 2), fSettings.fImageIndex,true);
-            if not fSettings.fShowDescription then
-            LCanvas.TextOut(fSettings.fImages.Width+16,(Height div 2) - (LCanvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+            //fImages.Draw(Canvas,8,(height  div 2) - (fImages.Height div 2), fImageIndex,true);
+            if not fShowDescription then
+            LCanvas.TextOut(fImages.Width+16,(Height div 2) - (LCanvas.TextHeight(fTitle) div 2), fTitle)
             else
               begin
-                  LCanvas.TextOut(fSettings.fImages.Width+16,(Height div 2)- (LCanvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-                  LCanvas.Font.Color := fSettings.fDescriptionFont.Color;
-                  LCanvas.Font.Size:=fSettings.fDescriptionFont.Size;
-                  LCanvas.Font.Style:= fSettings.fDescriptionFont.Style;
-                  if LCanvas.TextWidth(fSettings.fDesc)<(width - (fSettings.fImages.Width+32)) then
-                    LCanvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, fSettings.fDesc)
+                  LCanvas.TextOut(fImages.Width+16,(Height div 2)- (LCanvas.TextHeight(fTitle))-1, fTitle) ;
+                  LCanvas.Font.Color := fDescriptionFont.Color;
+                  LCanvas.Font.Size:=fDescriptionFont.Size;
+                  LCanvas.Font.Style:= fDescriptionFont.Style;
+                  if LCanvas.TextWidth(fDesc)<(width - (fImages.Width+32)) then
+                    LCanvas.TextOut(fImages.Width+16,(Height div 2) +1, fDesc)
                   else
-                    LCanvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, '...')
+                    LCanvas.TextOut(fImages.Width+16,(Height div 2) +1, '...')
               end;
             end;
        end
        else
-       if not fSettings.fShowDescription then begin
-        if not fSettings.fCenterTitle then
-           LCanvas.TextOut(8,(Height div 2)- (LCanvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+       if not fShowDescription then begin
+        if not fCenterTitle then
+           LCanvas.TextOut(8,(Height div 2)- (LCanvas.TextHeight(fTitle) div 2), fTitle)
         else
-           LCanvas.TextOut(width div 2 - LCanvas.TextWidth(fSettings.fTitle) div 2,(Height div 2)- (LCanvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+           LCanvas.TextOut(width div 2 - LCanvas.TextWidth(fTitle) div 2,(Height div 2)- (LCanvas.TextHeight(fTitle) div 2), fTitle)
        end
        else
        begin
-        LCanvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-        LCanvas.Font.Color := fSettings.fDescriptionFont.Color;
-        LCanvas.Font.Size:=fSettings.fDescriptionFont.Size;
-        LCanvas.Font.Style:= fSettings.fDescriptionFont.Style;
-        LCanvas.TextOut(8,(Height div 2) +1, fSettings.fDesc)
+        LCanvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fTitle))-1, fTitle) ;
+        LCanvas.Font.Color := fDescriptionFont.Color;
+        LCanvas.Font.Size:=fDescriptionFont.Size;
+        LCanvas.Font.Style:= fDescriptionFont.Style;
+        LCanvas.TextOut(8,(Height div 2) +1, fDesc)
        end;
 
      finally
      LCanvas.EndDraw;
      LCanvas.Free;
-     if (fSettings.fImages<>nil) then
-        if (fSettings.fImageIndex <> -1) and (fSettings.fImageIndex < fSettings.fImages.Count) then
-            fSettings.fImages.Draw(Canvas,8,(height  div 2) - (fSettings.fImages.Height div 2), fSettings.fImageIndex,true);
+     if (fImages<>nil) then
+        if (fImageIndex <> -1) and (fImageIndex < fImages.Count) then
+            fImages.Draw(Canvas,8,(height  div 2) - (fImages.Height div 2), fImageIndex,true);
    end;
   end
   else
@@ -223,65 +209,65 @@ begin
    Canvas.Font.Style:=Font.Style;
 
    if not AMouseMove then begin
-    Canvas.Brush.Color:=fSettings.fNormalColor;
-    Canvas.Pen.Color:=fSettings.fNormalColor;
+    Canvas.Brush.Color:=fNormalColor;
+    Canvas.Pen.Color:=fNormalColor;
    end
    else
    begin
-    Canvas.Brush.Color:=fSettings.fHoverColor;
-    Canvas.Pen.Color:=fSettings.fHoverColor;
+    Canvas.Brush.Color:=fHoverColor;
+    Canvas.Pen.Color:=fHoverColor;
    end;
 
-   if fSettings.fRoundedCorners then
+   if fRoundedCorners then
     Canvas.RoundRect(0,0,width,height,10,10)
    else
     Canvas.Rectangle(0,0,width,height);
 
-       if fSettings.fShowBorder then
+       if fShowBorder then
        begin
-        Canvas.Pen.Color:=fSettings.fBorderColor;
-        if not fSettings.fRoundedCorners then
+        Canvas.Pen.Color:=fBorderColor;
+        if not fRoundedCorners then
           Canvas.Rectangle(0,0,width,height)
         else
         canvas.roundrect(0,0,width,height,10,10)
        end;
 
-   if (fSettings.fImages<>nil)
+   if (fImages<>nil)
        then
        begin
-        if (fSettings.fImageIndex <> -1) and (fSettings.fImageIndex < fSettings.fImages.Count)
+        if (fImageIndex <> -1) and (fImageIndex < fImages.Count)
           then
             begin
-            fSettings.fImages.Draw(Canvas,8,(height  div 2) -(fSettings.fImages.Height div 2) ,fSettings.fImageIndex,true);
-            if not fSettings.fShowDescription then
-            Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+            fImages.Draw(Canvas,8,(height  div 2) -(fImages.Height div 2) ,fImageIndex,true);
+            if not fShowDescription then
+            Canvas.TextOut(fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
             else
               begin
-                 Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-                  Canvas.Font.Color := fSettings.fDescriptionFont.Color;
-                  Canvas.Font.Size:=fSettings.fDescriptionFont.Size;
-                  Canvas.Font.Style:= fSettings.fDescriptionFont.Style;
-                 if Canvas.TextWidth(fSettings.fDesc)<(width - (fSettings.fImages.Width+32)) then
-                 Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, fSettings.fDesc)
+                 Canvas.TextOut(fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fTitle))-1, fTitle) ;
+                  Canvas.Font.Color := fDescriptionFont.Color;
+                  Canvas.Font.Size:=fDescriptionFont.Size;
+                  Canvas.Font.Style:= fDescriptionFont.Style;
+                 if Canvas.TextWidth(fDesc)<(width - (fImages.Width+32)) then
+                 Canvas.TextOut(fImages.Width+16,(Height div 2) +1, fDesc)
                  else
-                 Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, '...')
+                 Canvas.TextOut(fImages.Width+16,(Height div 2) +1, '...')
               end;
             end;
        end
        else
-       if not fSettings.fShowDescription then begin
-        if not fSettings.fCenterTitle then
-           Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+       if not fShowDescription then begin
+        if not fCenterTitle then
+           Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
         else
-           Canvas.TextOut(width div 2 - Canvas.TextWidth(fSettings.fTitle) div 2,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+           Canvas.TextOut(width div 2 - Canvas.TextWidth(fTitle) div 2,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
        end
        else
        begin
-       Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-       Canvas.Font.Color := fSettings.fDescriptionFont.Color;
-       Canvas.Font.Size:=fSettings.fDescriptionFont.Size;
-       Canvas.Font.Style:= fSettings.fDescriptionFont.Style;
-       Canvas.TextOut(8,(Height div 2) +1, fSettings.fDesc)
+       Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fTitle))-1, fTitle) ;
+       Canvas.Font.Color := fDescriptionFont.Color;
+       Canvas.Font.Size:=fDescriptionFont.Size;
+       Canvas.Font.Style:= fDescriptionFont.Style;
+       Canvas.TextOut(8,(Height div 2) +1, fDesc)
        end;
    end;
 end;
@@ -297,68 +283,68 @@ begin
     Canvas.Font.Style:=Font.Style;
 
     if not AMouseMove then begin
-    AColor:=fSettings.fNormalColor;
-    Canvas.Brush.Color:=fSettings.fNormalColor;
+    AColor:=fNormalColor;
+    Canvas.Brush.Color:=fNormalColor;
     end
     else
     begin
-     AColor:=fSettings.fHoverColor;
-     Canvas.Brush.Color:=fSettings.fHoverColor;
+     AColor:=fHoverColor;
+     Canvas.Brush.Color:=fHoverColor;
     end;
 
     image := TBGRABitmap.Create(width, height, ColorToBGRA(ColorToRGB(self.Color)));
-    if fSettings.fRoundedCorners then
+    if fRoundedCorners then
     image.FillRoundRectAntialias(0,0,width,height,10,10,ColorToBGRA(ColorToRGB(AColor)))
     else
      image.FillRect(0,0,width,height,ColorToBGRA(ColorToRGB(AColor)));
 
-        if fSettings.fShowBorder then
+        if fShowBorder then
         begin
-         if not fSettings.fRoundedCorners then
-         image.RectangleAntialias(0,0,width-1,height-1,ColorToBGRA(ColorToRGB(fSettings.fBorderColor)),1)
+         if not fRoundedCorners then
+         image.RectangleAntialias(0,0,width-1,height-1,ColorToBGRA(ColorToRGB(fBorderColor)),1)
          else
-         image.RoundRectAntialias(0,0,width-1,height-1,10,10,ColorToBGRA(ColorToRGB(fSettings.fBorderColor)),1);
+         image.RoundRectAntialias(0,0,width-1,height-1,10,10,ColorToBGRA(ColorToRGB(fBorderColor)),1);
         end;
 
     image.Draw(Canvas, 0, 0, True);
     image.free;
 
-    if (fSettings.fImages<>nil)
+    if (fImages<>nil)
         then
         begin
-         if (fSettings.fImageIndex <> -1) and (fSettings.fImageIndex < fSettings.fImages.Count)
+         if (fImageIndex <> -1) and (fImageIndex < fImages.Count)
            then
              begin
-             fSettings.fImages.Draw(Canvas,8,(height  div 2) -(fSettings.fImages.Height div 2) ,fSettings.fImageIndex,true);
-             if not fSettings.fShowDescription then
-             Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+             fImages.Draw(Canvas,8,(height  div 2) -(fImages.Height div 2) ,fImageIndex,true);
+             if not fShowDescription then
+             Canvas.TextOut(fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
              else
                begin
-                  Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-                   Canvas.Font.Color := fSettings.fDescriptionFont.Color;
-                   Canvas.Font.Size:=fSettings.fDescriptionFont.Size;
-                   Canvas.Font.Style:= fSettings.fDescriptionFont.Style;
-                  if Canvas.TextWidth(fSettings.fDesc)<(width - (fSettings.fImages.Width+32)) then
-                  Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, fSettings.fDesc)
+                  Canvas.TextOut(fImages.Width+16,(Height div 2)- (Canvas.TextHeight(fTitle))-1, fTitle) ;
+                   Canvas.Font.Color := fDescriptionFont.Color;
+                   Canvas.Font.Size:=fDescriptionFont.Size;
+                   Canvas.Font.Style:= fDescriptionFont.Style;
+                  if Canvas.TextWidth(fDesc)<(width - (fImages.Width+32)) then
+                  Canvas.TextOut(fImages.Width+16,(Height div 2) +1, fDesc)
                   else
-                  Canvas.TextOut(fSettings.fImages.Width+16,(Height div 2) +1, '...')
+                  Canvas.TextOut(fImages.Width+16,(Height div 2) +1, '...')
                end;
              end;
         end
         else
-        if not fSettings.fShowDescription then begin
-         if not fSettings.fCenterTitle then
-            Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+        if not fShowDescription then begin
+         if not fCenterTitle then
+            Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
          else
-            Canvas.TextOut(width div 2 - Canvas.TextWidth(fSettings.fTitle) div 2,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle) div 2), fSettings.fTitle)
+            Canvas.TextOut(width div 2 - Canvas.TextWidth(fTitle) div 2,(Height div 2)- (Canvas.TextHeight(fTitle) div 2), fTitle)
         end
         else
         begin
-        Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fSettings.fTitle))-1, fSettings.fTitle) ;
-        Canvas.Font.Color := fSettings.fDescriptionFont.Color;
-        Canvas.Font.Size:=fSettings.fDescriptionFont.Size;
-        Canvas.Font.Style:= fSettings.fDescriptionFont.Style;
-        Canvas.TextOut(8,(Height div 2) +1, fSettings.fDesc)
+        Canvas.TextOut(8,(Height div 2)- (Canvas.TextHeight(fTitle))-1, fTitle) ;
+        Canvas.Font.Color := fDescriptionFont.Color;
+        Canvas.Font.Size:=fDescriptionFont.Size;
+        Canvas.Font.Style:= fDescriptionFont.Style;
+        Canvas.TextOut(8,(Height div 2) +1, fDesc)
         end;
 end;
 {$ENDIF}
@@ -396,7 +382,7 @@ end;
 
 destructor TSGJButton.Destroy;
 begin
-  FreeAndNil(fSettings.fDescriptionFont);
+  FreeAndNil(fDescriptionFont);
   inherited Destroy;
 end;
 
