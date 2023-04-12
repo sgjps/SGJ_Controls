@@ -84,6 +84,7 @@ end;
 constructor TSGJPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  parent:=TWinControl(AOwner);
   {$IfDef FPC}
   // Set default width and height
   with GetControlClassDefaultSize do
