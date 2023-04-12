@@ -68,6 +68,11 @@ type
     FButtonCheckedColor: TColor;
     FButtonUnCheckedColor: TColor;
     procedure SetChecked(AChecked: boolean);
+    procedure SetCaption(ACaption: String);
+    procedure SetButtonColor(AColor:TColor);
+    procedure SetCheckedColor(AColor:TColor);
+    procedure SetUnCheckedColor(AColor:TColor);
+    procedure SetTextBefore(AChecked: boolean);
     procedure Paint_Canvas();
     {$IFDEF MSWINDOWS}
     {$IFDEF SGJCTRL_W_GDIPlUS}
@@ -86,13 +91,14 @@ type
     property Enabled;
     property ParentBackground;
     property ParentColor;
-    property Caption: string read FTitle write ftitle;
+    property Caption: string read FTitle write SetCaption;
     property Checked: boolean read fChecked write SetChecked;
-    property TextBeforeButton: boolean read fTextBefore write fTextBefore;
-    property ButtonColor: TColor read fButtonColor write fButtonColor;
+    property TextBeforeButton: boolean read fTextBefore write SetTextBefore;
+    property ButtonColor: TColor read fButtonColor write SetButtonColor;
     property ButtonCheckedColor: TColor read FButtonCheckedColor
-      write FButtonCheckedColor;                                                                                                             property ButtonUnCheckedColor: TColor read FButtonUnCheckedColor
-      write FButtonUnCheckedColor;
+      write SetCheckedColor;
+    property ButtonUnCheckedColor: TColor read FButtonUnCheckedColor
+      write SetUnCheckedColor;
     property OnClick;
   end;
 
@@ -105,6 +111,50 @@ begin
   RegisterComponents('SGJ', [TSGJToogleButton]);
 end;
 
+procedure TSGJToogleButton.SetTextBefore(AChecked: boolean);
+begin
+  if fTextBefore<>AChecked then
+     begin
+        fTextBefore:=AChecked;
+        Paint;
+     end;
+end;
+
+procedure TSGJToogleButton.SetCheckedColor(AColor:TColor);
+begin
+  if FButtonCheckedColor<>AColor then
+     begin
+        FButtonCheckedColor:=AColor;
+        Paint;
+     end;
+end;
+
+procedure TSGJToogleButton.SetUnCheckedColor(AColor:TColor);
+begin
+  if FButtonUnCheckedColor<>AColor then
+     begin
+        FButtonUnCheckedColor:=AColor;
+        Paint;
+     end;
+end;
+
+procedure TSGJToogleButton.SetButtonColor(AColor:TColor);
+begin
+  if fButtonColor<>AColor then
+     begin
+        fButtonColor:=AColor;
+        Paint;
+     end;
+end;
+
+procedure TSGJToogleButton.SetCaption(ACaption: String);
+begin
+  if fTitle<>ACaption then
+     begin
+        fTitle:=ACaption;
+        Paint;
+     end;
+end;
 procedure TSGJToogleButton.SetChecked(AChecked: boolean);
 begin
   if fChecked<>AChecked then
@@ -123,6 +173,7 @@ end;
 constructor TSGJToogleButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  parent:=TWinControl(AOwner);
 {$IFDEF FPC}
   // Set default width and height
   with GetControlClassDefaultSize do
