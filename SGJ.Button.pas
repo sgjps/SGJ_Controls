@@ -44,6 +44,13 @@ Type
         fBorderColor: TColor;
         fCenterTitle: boolean;
         procedure SetTitle(ATitle: String);
+        procedure SetDescription(ATitle: String);
+        procedure SetColor(AColor: TColor);
+        procedure SetBorderColor(AColor: TColor);
+        procedure SetShowDescription(AChecked: boolean);
+        procedure SetBorder(AChecked: boolean);
+        procedure SetRoundedBorder(AChecked: boolean);
+        procedure SetTitleOnCenter(AChecked: boolean);
       constructor Create(AOwner: TComponent); override;
       destructor Destroy; override;
       procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
@@ -55,18 +62,18 @@ Type
         procedure PaintButtonBGRA(AMouseMove: Boolean);
         {$ENDIF}
     published
-        property Description: String read fDesc write fDesc;
-        property ColorNormal: TColor read fNormalColor write fNormalColor;
+        property Description: String read fDesc write SetDescription;
+        property ColorNormal: TColor read fNormalColor write SetColor;
         property ColorHover: TColor read fHoverColor write fHoverColor;
         property Caption: String read FTitle write SetTitle;
         property Images: TCustomImageList read fImages write fImages;
-        property ImageIndex: Integer read fImageIndex write fImageIndex default -1;
-        property ShowDescription: boolean read fShowDescription write fShowDescription;
+        property ImageIndex: Integer read fImageIndex write fImageIndex;
+        property ShowDescription: boolean read fShowDescription write SetShowDescription;
         property FontDescription: TFont read fDescriptionFont write fDescriptionFont;
-        property ShowBorder: boolean read fShowBorder write fShowBorder;
-        property BorderColor: TColor read fBorderColor write fBorderColor;
-        property RoundedCorners: Boolean read fRoundedCorners write fRoundedCorners;
-        property TitleOnCenter: Boolean read fCenterTitle write fCenterTitle;
+        property ShowBorder: boolean read fShowBorder write SetBorder;
+        property BorderColor: TColor read fBorderColor write SetBorderColor;
+        property RoundedCorners: Boolean read fRoundedCorners write SetRoundedBorder;
+        property TitleOnCenter: Boolean read fCenterTitle write SetTitleOnCenter;
         property Font;
         property OnClick;
         property Color;
@@ -83,28 +90,96 @@ begin
   RegisterComponents('SGJ', [TSGJButton]);
 end;
 
-procedure TSGJButton.SetTitle(ATitle: String);
+procedure TSGJButton.SetTitleOnCenter(AChecked: boolean);
 begin
-   fTitle:=ATitle;
+  if fCenterTitle<>AChecked then
+   begin
+   fCenterTitle:=AChecked;
    Paint;
+   end;
 end;
 
+procedure TSGJButton.SetBorder(AChecked: boolean);
+begin
+  if fShowBorder<>AChecked then
+   begin
+   fShowBorder:=AChecked;
+   Paint;
+   end;
+end;
+
+procedure TSGJButton.SetRoundedBorder(AChecked: boolean);
+begin
+  if fRoundedCorners<>AChecked then
+   begin
+   fRoundedCorners:=AChecked;
+   Paint;
+   end;
+end;
+
+procedure TSGJButton.SetShowDescription(AChecked: boolean);
+begin
+  if fShowDescription<>AChecked then
+   begin
+   fShowDescription:=AChecked;
+   Paint;
+   end;
+end;
+
+procedure TSGJButton.SetBorderColor(AColor: TColor);
+begin
+  if fBorderColor<>AColor then
+   begin
+   fBorderColor:=AColor;
+   Paint;
+   end;
+end;
+
+procedure TSGJButton.SetColor(AColor: TColor);
+begin
+  if fNormalColor<>AColor then
+   begin
+   fNormalColor:=AColor;
+   Paint;
+   end;
+end;
+
+procedure TSGJButton.SetTitle(ATitle: String);
+begin
+  if fTitle<>ATitle then
+   begin
+   fTitle:=ATitle;
+   Paint;
+   end;
+end;
+procedure TSGJButton.SetDescription(ATitle: String);
+begin
+  if fDesc<>ATitle then
+   begin
+   fDesc:=ATitle;
+   Paint;
+   end;
+end;
 
 constructor TSGJButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  parent:=TWinControl(AOwner);
   {$IfDef FPC}
   // Set default width and height
   with GetControlClassDefaultSize do
       SetInitialBounds(0, 0, CX, CY);
   {$EndIf}
-
+  fDescriptionFont:=TFont.Create();
   BorderStyle:=bsNone;
   BevelInner:=bvNone;
   BevelOuter:=bvNone;
   Height:=32;
   ParentBackground:=false;
+  ImageIndex:=-1;
 
+  fNormalColor:=clBtnface;
+  fHoverColor:= clSilver;
   color:=fNormalColor;
 
 end;
