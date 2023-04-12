@@ -538,7 +538,7 @@ begin
     else
         image.FillEllipseAntialias((width - height)-height div 2, height div 2, height div 3, height div 3, ColorToBGRA(ColorToRGB(FButtonUnCheckedColor)));
 
-    image.TextOut(5, Height div 2  - (image.FontHeight div 2), Title, Font.Color);
+    image.TextOut(5, Height div 2  - (image.FontHeight div 2), fTitle, Font.Color);
   end
   else
   begin
@@ -553,7 +553,7 @@ begin
        image.FillEllipseAntialias(height div 2, height div 2, height div 3, height div 3, ColorToBGRA(ColorToRGB(FButtonUnCheckedColor)));
 
 
-    image.TextOut(height *2 +5, Height div 2 - (image.FontHeight div 2), Title, Font.Color);
+    image.TextOut(height *2 +5, Height div 2 - (image.FontHeight div 2), fTitle, Font.Color);
   end;
 
   image.Draw(Canvas, 0, 0, True);
