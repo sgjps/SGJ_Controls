@@ -31,15 +31,18 @@ type
           fTitle : string;
           fBorderColor: TColor;
 		      fShowBorder: boolean;
+          procedure SetCaption(ACaption: string);
+          procedure SetBorder(ABorder: boolean);
+          procedure SetBorderColor(AColor: TColor);
   protected
   public
           constructor Create(AOwner: TComponent); override;
           procedure AdjustClientRect(var aRect: TRect); override;
           procedure Paint; override;
   published
-          property Caption: String read FTitle write ftitle;
-          property BorderColor: TColor read fBorderColor write fBorderColor;
-		  property ShowBorder: boolean read fShowBorder write fShowBorder;
+          property Caption: String read FTitle write SetCaption;
+          property BorderColor: TColor read fBorderColor write SetBorderColor;
+		      property ShowBorder: boolean read fShowBorder write SetBorder;
   end;
 
 procedure Register;
@@ -51,6 +54,32 @@ begin
   RegisterComponents('SGJ',[TSGJPanel]);
 end;
 
+procedure TSGJPanel.SetBorderColor(AColor: TColor);
+begin
+  if fBorderColor<>AColor then
+  begin
+     fBorderColor:=AColor;
+     Paint();
+  end;
+end;
+
+procedure TSGJPanel.SetCaption(ACaption: string);
+begin
+  if fTitle<>ACaption then
+  begin
+     fTitle:=ACaption;
+     Paint();
+  end;
+end;
+
+procedure TSGJPanel.SetBorder(ABorder: boolean);
+begin
+  if fShowBorder<>ABorder then
+  begin
+     fShowBorder:=ABorder;
+     Paint();
+  end;
+end;
 
 constructor TSGJPanel.Create(AOwner: TComponent);
 begin
