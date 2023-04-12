@@ -37,7 +37,7 @@ type
           procedure AdjustClientRect(var aRect: TRect); override;
           procedure Paint; override;
   published
-          property Title: String read FTitle write ftitle;
+          property Caption: String read FTitle write ftitle;
           property BorderColor: TColor read fBorderColor write fBorderColor;
 		  property ShowBorder: boolean read fShowBorder write fShowBorder;
   end;
@@ -79,27 +79,27 @@ begin
       Canvas.Font.Color := self.Font.Color;
       Canvas.font.Style:=self.Font.Style;
       Canvas.Font.Size:=self.Font.Size;
-      Canvas.TextOut(15,0, Self.Title);
+      Canvas.TextOut(15,0, Self.fTitle);
       Brush.Style := bsSolid;
 	  
 	  if self.ShowBorder then
 		begin
-			if Self.Title<>'' then
+			if Self.fTitle<>'' then
 			begin
       //left
-      Canvas.MoveTo(1,(TextHeight(Self.Title)div 2)+1);
+      Canvas.MoveTo(1,(TextHeight(Self.fTitle)div 2)+1);
       Canvas.LineTo(1,self.height-1);
 
       //Top Left
-      Canvas.MoveTo(2, (TextHeight(Self.Title)div 2));
-      Canvas.LineTo(12,(TextHeight(Self.Title)div 2));
+      Canvas.MoveTo(2, (TextHeight(Self.fTitle)div 2));
+      Canvas.LineTo(12,(TextHeight(Self.fTitle)div 2));
 
       //Top Right
-      Canvas.MoveTo(TextWidth(Self.Title)+18,(TextHeight(Self.Title)div 2));//+1);
-      Canvas.LineTo(self.width-3,(TextHeight(Self.Title)div 2));//+1);
+      Canvas.MoveTo(TextWidth(Self.fTitle)+18,(TextHeight(Self.fTitle)div 2));//+1);
+      Canvas.LineTo(self.width-3,(TextHeight(Self.fTitle)div 2));//+1);
 	  
       //right
-      Canvas.MoveTo(self.width-3,(TextHeight(Self.Title)div 2)+1);
+      Canvas.MoveTo(self.width-3,(TextHeight(Self.fTitle)div 2)+1);
       Canvas.LineTo(Self.width-3,self.height-1);
 
       //bottom

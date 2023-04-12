@@ -31,7 +31,7 @@ uses
 Type
   TSGJButton = class(TCustomPanel)
     public
-	fNormalColor: TColor;
+	    fNormalColor: TColor;
         fHoverColor:TColor;
         fTitle : string;
         fImages: TCustomImageList;
@@ -44,11 +44,11 @@ Type
         fBorderColor: TColor;
         fCenterTitle: boolean;
         procedure SetTitle(ATitle: String);
-      	constructor Create(AOwner: TComponent); override;
-      	destructor Destroy; override;
-      	procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
-      	procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
-      	procedure Paint; override;
+      constructor Create(AOwner: TComponent); override;
+      destructor Destroy; override;
+      procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
+      procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
+      procedure Paint; override;
     private
         procedure PaintButton(AMouseMove: Boolean);
         {$IFDEF FPC}
@@ -58,7 +58,7 @@ Type
         property Description: String read fDesc write fDesc;
         property ColorNormal: TColor read fNormalColor write fNormalColor;
         property ColorHover: TColor read fHoverColor write fHoverColor;
-        property Title: String read FTitle write SetTitle;
+        property Caption: String read FTitle write SetTitle;
         property Images: TCustomImageList read fImages write fImages;
         property ImageIndex: Integer read fImageIndex write fImageIndex default -1;
         property ShowDescription: boolean read fShowDescription write fShowDescription;
@@ -384,5 +384,8 @@ begin
   FreeAndNil(fDescriptionFont);
   inherited Destroy;
 end;
+
+
+
 end.
 

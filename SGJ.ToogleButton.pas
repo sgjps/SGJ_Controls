@@ -86,7 +86,7 @@ type
     property Enabled;
     property ParentBackground;
     property ParentColor;
-    property Title: string read FTitle write ftitle;
+    property Caption: string read FTitle write ftitle;
     property Checked: boolean read fChecked write SetChecked;
     property TextBeforeButton: boolean read fTextBefore write fTextBefore;
     property ButtonColor: TColor read fButtonColor write fButtonColor;
@@ -208,7 +208,7 @@ begin
       Canvas.font.Style := Font.Style;
       Canvas.Font.Size := Font.Size;
 
-      Canvas.TextOut(5, Height div 2 - (Canvas.TextHeight(Title) div 2), Title);
+      Canvas.TextOut(5, Height div 2 - (Canvas.TextHeight(self.fTitle) div 2), self.fTitle);
     end
     else
     begin
@@ -235,7 +235,7 @@ begin
       Canvas.Font.Size := Font.Size;
 
       Canvas.TextOut(Height * 2 + 5, Height div 2 -
-        (Canvas.TextHeight(Title) div 2), Title);
+        (Canvas.TextHeight(self.fTitle) div 2), self.fTitle);
     end;
 
   end;
@@ -399,7 +399,7 @@ begin
     solidBrush := TGPSolidBrush.Create(MakeColor(255, GetRValue(Font.Color),GetGValue(Font.Color), GetBValue(Font.Color)));
     graphics.DrawString(Title, -1, gdifont, pointF, solidBrush);}
     Canvas.Font.Size := Font.Size;
-    Canvas.TextOut(Height * 2 + 5, Height div 2 - (Canvas.TextHeight(Title) div 2), Title);
+    Canvas.TextOut(Height * 2 + 5, Height div 2 - (Canvas.TextHeight(self.fTitle) div 2), self.fTitle);
   end
   else
   begin
@@ -445,7 +445,7 @@ begin
     gdifont := TGPFont.Create(fontFamily, Font.Size, FontStyleRegular, UnitPixel);
     graphics.DrawString(Title, -1, gdifont, pointF, solidBrush); }
     Canvas.Font.Size := Font.Size;
-    Canvas.TextOut(5, Height div 2 - (Canvas.TextHeight(Title) div 2), Title);
+    Canvas.TextOut(5, Height div 2 - (Canvas.TextHeight(self.fTitle) div 2), self.fTitle);
   end;
 
   Graphics.Free;
