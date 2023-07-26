@@ -19,7 +19,7 @@ interface
 
 uses
 {$IFDEF FPC}
-  LResources,
+  LResources, LCLType, 
 {$ELSE}
   Windows,
 {$ENDIF}
@@ -31,7 +31,7 @@ type
           fTitle : string;
           fBorderColor: TColor;
 		      fShowBorder: boolean;
-          procedure SetCaption(ACaption: string);
+          procedure SetCaption(ACaption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
           procedure SetBorder(ABorder: boolean);
           procedure SetBorderColor(AColor: TColor);
   protected
@@ -40,7 +40,7 @@ type
           procedure AdjustClientRect(var aRect: TRect); override;
           procedure Paint; override;
   published
-          property Caption: String read FTitle write SetCaption;
+          property Caption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF} read FTitle write SetCaption;
           property BorderColor: TColor read fBorderColor write SetBorderColor;
 		      property ShowBorder: boolean read fShowBorder write SetBorder;
   end;
@@ -63,7 +63,7 @@ begin
   end;
 end;
 
-procedure TSGJPanel.SetCaption(ACaption: string);
+procedure TSGJPanel.SetCaption(ACaption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
 begin
   if fTitle<>ACaption then
   begin
