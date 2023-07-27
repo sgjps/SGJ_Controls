@@ -4,7 +4,7 @@
 {                                                                    }
 { date      : 2023/04/05                                             }
 {                                                                    }
-{ version   : 1.0                                                    }
+{ version   : 1.1                                                    }
 {                                                                    }
 { This file is part of SGJ Controls for Delphi and Lazarus           }
 {                                                                    }
