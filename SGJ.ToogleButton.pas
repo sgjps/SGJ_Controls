@@ -2,9 +2,9 @@
 { home page : https://www.sgjps.com                                  }
 { email     : sgj@sgjps.com                                          }
 {                                                                    }
-{ date      : 2023/04/05                                             }
-{                                                                    }
-{ version   : 1.0                                                    }
+{ date      : 2023/08/15                                             }
+{ Updated	: 2024/02/28                                                                   }
+{ version   : 1.1pre                                                    }
 {                                                                    }
 { This file is part of SGJ Controls for Delphi and Lazarus           }
 {                                                                    }
@@ -32,7 +32,8 @@ unit SGJ.ToogleButton;
 {$IF CompilerVersion >= 21}
 	{$DEFINE SGJCTRL_W_D2D}
 {$IFEND}
-  {$DEFINE SGJCTRL_W_GDIPlUS}
+ // {$DEFINE SGJCTRL_W_GDIPlUS}
+ {$DEFINE SGJCTRL_W_Canvas}
 {$ENDIF}
 interface
 
@@ -50,6 +51,9 @@ uses
 {$IFDEF SGJCTRL_W_BGRA}
   bgrabitmap, BGRABitmapTypes,
 {$ENDIF}
+{$IfDef FPC}
+LCLType, LResources,
+{$ENDIF}
   Forms, Messages, Classes, Graphics, ExtCtrls, Controls,StdCtrls;
 
 type
@@ -61,14 +65,14 @@ type
     procedure Paint; override;
     procedure Click; override;
   private
-    fTitle: string;
+    fTitle: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF};
     fChecked: boolean;
     fTextBefore: boolean;
     fButtonColor: TColor;
     FButtonCheckedColor: TColor;
     FButtonUnCheckedColor: TColor;
     procedure SetChecked(AChecked: boolean);
-    procedure SetCaption(ACaption: String);
+    procedure SetCaption(ACaption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure SetButtonColor(AColor:TColor);
     procedure SetCheckedColor(AColor:TColor);
     procedure SetUnCheckedColor(AColor:TColor);
@@ -91,7 +95,7 @@ type
     property Enabled;
     property ParentBackground;
     property ParentColor;
-    property Caption: string read FTitle write SetCaption;
+    property Caption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF} read FTitle write SetCaption;
     property Checked: boolean read fChecked write SetChecked;
     property TextBeforeButton: boolean read fTextBefore write SetTextBefore;
     property ButtonColor: TColor read fButtonColor write SetButtonColor;
@@ -100,6 +104,8 @@ type
     property ButtonUnCheckedColor: TColor read FButtonUnCheckedColor
       write SetUnCheckedColor;
     property OnClick;
+    property Anchors;
+    property Visible;
   end;
 
 procedure Register;
@@ -147,7 +153,7 @@ begin
      end;
 end;
 
-procedure TSGJToogleButton.SetCaption(ACaption: String);
+procedure TSGJToogleButton.SetCaption(ACaption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
 begin
   if fTitle<>ACaption then
      begin
@@ -584,5 +590,7 @@ begin
        {$ENDIF}
   {$ENDIF}
 end;
-
-end.
+{$IFDEF FPC}
+initialization
+  {$I SGJ.ToogleButton.lrs}
+{$ENDIF}end.
