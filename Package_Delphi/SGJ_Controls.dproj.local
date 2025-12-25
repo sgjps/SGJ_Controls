@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.882,=rtl.dcp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.867,=D:\Projects\Components\SGJ_Controls\src\SGJ.Panel.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.380,=vcl.dcp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.084,D:\Projects\Components\SGJ_Controls\Package_Delphi\SGJ_Controls.dproj=C:\Users\sgj\Documents\Embarcadero\Studio\Projects\Package1.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.790,=D:\Projects\Components\SGJ_Controls\src\SGJ.LinkLabel.pas</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="SGJ_Controls"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="Grzegorz Skulimowski"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\src"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="2"/>
+        </Optimizations>
+      </CodeGeneration>
+      <Linking>
+        <Debugging>
+          <UseExternalDbgSyms Value="True"/>
+        </Debugging>
+      </Linking>
+    </CompilerOptions>
+    <Version Major="2" Release="2512"/>
+    <Files>
+      <Item>
+        <Filename Value="..\src\SGJ.LinkLabel.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.LinkLabel"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.Button.pas"/>
+        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="SGJ.Button"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.SimpleButton.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.SimpleButton"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.CheckBox.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.CheckBox"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.Panel.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.Panel"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ListView.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ListView"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ShellTreeView.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ShellTreeView"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJListViewPropEdit.pp"/>
+        <UnitName Value="SGJListViewPropEdit"/>
+      </Item>
+    </Files>
+    <RequiredPkgs>
+      <Item>
+        <PackageName Value="IDEIntf"/>
+      </Item>
+      <Item>
+        <PackageName Value="BGRABitmapPack"/>
+      </Item>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
