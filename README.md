@@ -1,17 +1,22 @@
 # SGJ_Controls
 Visual Controls for Delphi and Lazarus
 
-TSGJLinkLabel - Label with URL property. URL is auto executed when label click without any additional code.
+TSGJLinkLabel - Label with URL property. URL is auto executed when label click without any additional code. [Delphi / Lazarus]
 
-TSGJPanel - Custom Panel with or without border. 
+TSGJPanel - Custom Panel with or without border. [Delphi / Lazarus]
 
-TSGJButton - Panel based button with image.
-- Image
+TSGJButton - Button with image. [Lazarus]
+- Image from imagelist
 - Border with selected color, or without border
-- Custom button color
-- Text left or center
+- Custom button color: normal, hover, clicked, disabled
+- Image and text position
 - Single line text or Title with Description (2 lines)
               
-TSGJToogleButton - Toogle button, modern checkbox replacement.
+TSGJCheckbox - Checkbox | RadioButton | ToggleButton | ToggleRadioButton [Lazarus]
 
-![Demo](https://github.com/sgjps/SGJ_Controls/blob/main/Images/SGJControls.jpg)
+TSGJShellTreeView - Directory TreeView [Lazarus]
+
+TSGJListView - ListView for Lazarus with Tile and Groups support on Windows. Compatible with other platforms[tile and groups are ignored] [Lazarus]
+
+
+
