@@ -1,0 +1,238 @@
+object SGJListViewItemsEditorForm: TSGJListViewItemsEditorForm
+  Left = 293
+  Height = 450
+  Top = 179
+  Width = 788
+  ActiveControl = BtnNewItem
+  BorderIcons = [biSystemMenu, biHelp]
+  Caption = 'ListView Items Editor'
+  ClientHeight = 450
+  ClientWidth = 788
+  Constraints.MinHeight = 300
+  Constraints.MinWidth = 600
+  DesignTimePPI = 144
+  Position = poScreenCenter
+  LCLVersion = '4.4.0.0'
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnShow = FormShow
+  object GroupBox1: TGroupBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideBottom.Control = ButtonPanel
+    Left = 9
+    Height = 388
+    Top = 9
+    Width = 503
+    Anchors = [akTop, akLeft, akBottom]
+    BorderSpacing.Around = 9
+    Caption = 'Items'
+    ClientHeight = 358
+    ClientWidth = 499
+    TabOrder = 0
+    object TreeView1: TTreeView
+      AnchorSideLeft.Control = GroupBox1
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideBottom.Control = GroupBox1
+      AnchorSideBottom.Side = asrBottom
+      Left = 8
+      Height = 342
+      Top = 8
+      Width = 291
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BorderSpacing.Left = 8
+      BorderSpacing.Top = 8
+      BorderSpacing.Bottom = 8
+      HideSelection = False
+      ReadOnly = True
+      TabOrder = 0
+      Options = [tvoAutoItemHeight, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
+      OnSelectionChanged = TreeView1SelectionChanged
+    end
+    object BtnNewItem: TButton
+      Tag = 1
+      AnchorSideLeft.Control = TreeView1
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 308
+      Height = 38
+      Top = 9
+      Width = 182
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Around = 9
+      Caption = '&New Item'
+      TabOrder = 1
+      OnClick = BtnNewItemClick
+    end
+    object BtnNewSubItem: TButton
+      AnchorSideLeft.Control = TreeView1
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = BtnNewItem
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 308
+      Height = 38
+      Top = 56
+      Width = 182
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Around = 9
+      Caption = 'N&ew SubItem'
+      TabOrder = 2
+      OnClick = BtnNewItemClick
+    end
+    object BtnDelete: TButton
+      AnchorSideLeft.Control = TreeView1
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = BtnNewSubItem
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 308
+      Height = 38
+      Top = 103
+      Width = 182
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Around = 9
+      Caption = '&Delete'
+      TabOrder = 3
+      OnClick = btnDeleteClick
+    end
+  end
+  object GroupBox2: TGroupBox
+    AnchorSideLeft.Control = GroupBox1
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = ButtonPanel
+    Left = 521
+    Height = 388
+    Top = 9
+    Width = 258
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Around = 9
+    Caption = 'Item Properties'
+    ClientHeight = 358
+    ClientWidth = 254
+    TabOrder = 1
+    object LabelCaption: TLabel
+      AnchorSideLeft.Control = GroupBox2
+      AnchorSideTop.Control = GroupBox2
+      Left = 9
+      Height = 25
+      Top = 9
+      Width = 66
+      BorderSpacing.Left = 9
+      BorderSpacing.Top = 9
+      Caption = 'Caption:'
+      FocusControl = edtText
+      ParentColor = False
+    end
+    object LabelImageIndex: TLabel
+      AnchorSideLeft.Control = LabelCaption
+      AnchorSideTop.Control = edtText
+      AnchorSideTop.Side = asrBottom
+      Left = 9
+      Height = 25
+      Top = 79
+      Width = 102
+      BorderSpacing.Top = 9
+      Caption = 'Image Index:'
+      FocusControl = edtIndexImg
+      ParentColor = False
+    end
+    object LabelStateIndex: TLabel
+      AnchorSideLeft.Control = LabelImageIndex
+      AnchorSideTop.Control = edtIndexImg
+      AnchorSideTop.Side = asrBottom
+      Left = 9
+      Height = 25
+      Top = 149
+      Width = 91
+      BorderSpacing.Top = 9
+      Caption = 'State Index:'
+      FocusControl = edtIndexState
+      ParentColor = False
+    end
+    object edtText: TEdit
+      AnchorSideLeft.Control = LabelCaption
+      AnchorSideTop.Control = LabelCaption
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = GroupBox2
+      AnchorSideRight.Side = asrBottom
+      Left = 9
+      Height = 33
+      Top = 37
+      Width = 237
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 3
+      BorderSpacing.Right = 8
+      TabOrder = 0
+      OnChange = Edit1Change
+    end
+    object edtIndexImg: TEdit
+      AnchorSideLeft.Control = edtText
+      AnchorSideTop.Control = LabelImageIndex
+      AnchorSideTop.Side = asrBottom
+      Left = 9
+      Height = 33
+      Top = 107
+      Width = 72
+      BorderSpacing.Top = 3
+      TabOrder = 1
+      OnEditingDone = edtIndexStateEditingDone
+    end
+    object edtIndexState: TEdit
+      AnchorSideLeft.Control = edtIndexImg
+      AnchorSideTop.Control = LabelStateIndex
+      AnchorSideTop.Side = asrBottom
+      Left = 9
+      Height = 33
+      Top = 177
+      Width = 72
+      BorderSpacing.Top = 3
+      TabOrder = 2
+      OnEditingDone = edtIndexStateEditingDone
+    end
+    object LabelGroupID: TLabel
+      Left = 10
+      Height = 25
+      Top = 225
+      Width = 75
+      Caption = 'Group Id:'
+    end
+    object cbGroups: TComboBox
+      Left = 8
+      Height = 33
+      Top = 256
+      Width = 232
+      Anchors = [akTop, akLeft, akRight]
+      ItemHeight = 25
+      Style = csDropDownList
+      TabOrder = 3
+      OnEditingDone = edtIndexStateEditingDone
+    end
+  end
+  object ButtonPanel: TButtonPanel
+    Left = 9
+    Height = 35
+    Top = 406
+    Width = 770
+    BorderSpacing.Around = 9
+    OKButton.Name = 'OKButton'
+    OKButton.DefaultCaption = True
+    HelpButton.Name = 'HelpButton'
+    HelpButton.DefaultCaption = True
+    CloseButton.Name = 'CloseButton'
+    CloseButton.DefaultCaption = True
+    CloseButton.OnClick = btnApplyClick
+    CancelButton.Name = 'CancelButton'
+    CancelButton.DefaultCaption = True
+    TabOrder = 2
+    ShowButtons = [pbOK, pbCancel, pbClose]
+    ShowBevel = False
+  end
+end
