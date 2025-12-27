@@ -19,4 +19,4 @@ TSGJShellTreeView - Directory TreeView [Lazarus]
 TSGJListView - ListView for Lazarus with Tile and Groups support on Windows. Compatible with other platforms[tile and groups are ignored] [Lazarus]
 
 
-
+Homepage: https://www.hiperapps.com/en/ctrls/SGJ_Controls_for_Lazarus_and_Delphi
