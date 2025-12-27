@@ -1,7 +1,7 @@
 This is the file COPYING.modifiedLGPL, it applies to all units of the
 SGJ Controls for Delphi and Lazarus.
 
-These files are distributed under the Library GNU General Public License
+These files are distributed under the GNU Lesser General Public License
 (see the file COPYING.LGPL) with the following modification:
 
 As a special exception, the copyright holders of this library give you
@@ -21,4 +21,5 @@ If you didn't receive a copy of the file COPYING.LGPL, contact:
       675 Mass Ave
       Cambridge, MA  02139
       USA
+
 
