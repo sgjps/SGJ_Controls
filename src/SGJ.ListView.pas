@@ -23,12 +23,12 @@ interface
 
 uses
   {$IfDef MSWindows}
-  Windows, uxtheme,CommCtrl,
+  Windows, uxtheme, CommCtrl,
   {$EndIf}
   {$IFDEF FPC}
   LCLType,LResources,
   {$EndIf}
-  Classes, ComCtrls, SysUtils, Graphics, Dialogs,ImgList;
+  Classes, ComCtrls, SysUtils, Graphics, Dialogs, ImgList;
 
 type
   //Copy from ComCtrls->listitems.inc
@@ -49,7 +49,7 @@ type
 
   //Custom View Style
   TSGJViewStyle = (lvsIcon, lvsSmallIcon, lvsList, lvsReport, lvsTile);
-  TStyleName = (snDefault,snLight, snDark);
+  TStyleName = (snDefault, snLight, snDark);
 
   //Tile Options, Delphi Compatible, but without TileColumns- TTileColumns
   //Tile Columns is calculated from SubLineCount
@@ -193,6 +193,8 @@ type
     fTileOpt: TTileOptions;
     fTileColumns: array of uint;
     fStyleName: TStyleName;
+    fOldColor: TColor;
+    fOldFontColor: TColor;
     FGroupHeaderImages: TCustomImageList;
     procedure SetViewStyleEx(AValue: TSGJViewStyle);
     procedure SetTileView();
@@ -207,8 +209,8 @@ type
     procedure DrawDarkGroupHeader();
     procedure SetStyle(AValue: TStyleName);
     procedure doAdvancedCustomDraw(Sender: TCustomListView;
-      const ARect: TRect; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
- public
+      const ARect: TRect; Stage: TCustomDrawStage; var DefaultDraw: boolean);
+  public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure UpdateGroups();
@@ -218,10 +220,10 @@ type
     procedure InsertItem(AItem: TListItem); override;
     function CreateListItems: TListItems; override;
     function CreateListItem: TListItem; override;
-    function CustomDraw(const ARect: TRect; AStage: TCustomDrawStage): Boolean;override;
+    function CustomDraw(const ARect: TRect; AStage: TCustomDrawStage): boolean; override;
   published
     //Style
-    property StyleName:TStylename read fStyleName write SetStyle;
+    property StyleName: TStylename read fStyleName write SetStyle;
     //GroupView
     property GroupView: boolean read fGrupView write SetGroupView;
     //GroupHeaderImages
@@ -336,18 +338,20 @@ type
     property OnUTF8KeyPress;
   end;
 
-  {$IFDEF MSWINDOWS}
+{$IFDEF MSWINDOWS}
 const
   LVS_TILEVIEW = $0004;
   LVGS_COLLAPSIBLE = $00000008;
   LVGS_NOHEADER = $00000004;
-  ID_SUB_LISTVIEW    = 6;
-  LVM_GETGROUPRECT  = LVM_FIRST + 98;
-  LVGGR_GROUP      = 0; // Entire group
-  LVGGR_HEADER     = 1; // Header only
-  LVGGR_LABEL      = 2; // Label only
+  ID_SUB_LISTVIEW = 100;
+  LVM_GETGROUPRECT = LVM_FIRST + 98;
+  LVM_GETGROUPSTATE  = LVM_FIRST + 92;
+  LVGGR_GROUP = 0; // Entire group
+  LVGGR_HEADER = 1; // Header only
+  LVGGR_LABEL = 2; // Label only
   LVGGR_SUBSETLINK = 3; // Subset link only
-  {$ENDIF}
+
+{$ENDIF}
 procedure Register;
 
 implementation
@@ -357,39 +361,59 @@ begin
   RegisterComponents('SGJ', [TSGJListView]);
 end;
 {$IFDEF MSWindows}
-function ListView_GetGroupRect(hwnd: HWND; iGroupId, iType: Integer; var prc: TRect): Integer;
-begin
- prc.Top := iType;
- Result := SendMessage(hwnd, LVM_GETGROUPRECT, WPARAM(iGroupId), LPARAM(@prc));
-end;
-function ListViewWindowProcSubclassed(Window: HWND; Msg: UINT; _wParam: Windows.WPARAM; _lParam: Windows.LPARAM; uISubClass: UINT_PTR; dwRefData: DWORD_PTR): LRESULT; stdcall;
+
+function IsGroupCollapsed(hwnd: HWND; GroupID: Integer): Boolean;
 var
-  NMHdr: LCLType.PNMHDR; NMCustomDraw: PNMLVCUSTOMDRAW;
+  State: UINT;
+begin
+  Result := False;
+  // Send message to get the group state
+  State := SendMessage(hwnd, LVM_GETGROUPSTATE, GroupID, LVGS_COLLAPSED);
+
+  // If LVGS_COLLAPSED bit is set, the group is collapsed
+  Result := (State and LVGS_COLLAPSED) <> 0;
+end;
+
+function ListView_GetGroupRect(hwnd: HWND; iGroupId, iType: integer;
+  var prc: TRect): integer;
+begin
+  prc.Top := iType;
+  Result := SendMessage(hwnd, LVM_GETGROUPRECT, WPARAM(iGroupId), LPARAM(@prc));
+end;
+
+function ListViewWindowProcSubclassed(Window: HWND; Msg: UINT;
+  _wParam: Windows.WPARAM; _lParam: Windows.LPARAM; uISubClass: UINT_PTR;
+  dwRefData: DWORD_PTR): LRESULT; stdcall;
+var
+  NMHdr: LCLType.PNMHDR;
+  NMCustomDraw: PNMLVCUSTOMDRAW;
   DC: HDC;
   R: TRect;
   OldFont: HFONT;
   Font: TFont;
 begin
-    If Msg = WM_NOTIFY then begin
-       NMHdr := LCLType.PNMHDR(_LParam);
-       if NMHdr^.code = NM_CUSTOMDRAW then begin
-          NMCustomDraw:= PNMLVCUSTOMDRAW(_LParam);
-          case NMCustomDraw^.nmcd.dwDrawStage of
-            CDDS_PREPAINT:
-             begin
-               Result :=CDRF_NOTIFYITEMDRAW;
-               exit;
-             end;
-            CDDS_ITEMPREPAINT:
-             begin
-               SetTextColor(NMCustomDraw^.nmcd.hdc , RGBToColor(255, 255, 255));
-               Result := CDRF_NEWFONT;
-               exit;
-             end;
-          end;
+  if Msg = WM_NOTIFY then
+  begin
+    NMHdr := LCLType.PNMHDR(_LParam);
+    if NMHdr^.code = NM_CUSTOMDRAW then
+    begin
+      NMCustomDraw := PNMLVCUSTOMDRAW(_LParam);
+      case NMCustomDraw^.nmcd.dwDrawStage of
+        CDDS_PREPAINT:
+        begin
+          Result := CDRF_NOTIFYITEMDRAW;
+          exit;
         end;
+        CDDS_ITEMPREPAINT:
+        begin
+          SetTextColor(NMCustomDraw^.nmcd.hdc, RGBToColor(255, 255, 255));
+          Result := CDRF_NEWFONT;
+          exit;
+        end;
+      end;
     end;
-    Result := DefSubclassProc(Window, Msg, _WParam, _LParam);
+  end;
+  Result := DefSubclassProc(Window, Msg, _WParam, _LParam);
 end;
 {$ENDIF}
 {$region TListGroup}
@@ -400,7 +424,6 @@ begin
     FHeader := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
-
 
 end;
 
@@ -415,7 +438,8 @@ end;
 
 procedure TListGroup.SetFooter(AValue: TTranslateString);
 begin
-  if FFooter <> AValue then begin
+  if FFooter <> AValue then
+  begin
     FFooter := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
@@ -429,7 +453,8 @@ end;
 
 procedure TListGroup.SetGroupID(AValue: integer);
 begin
-  if FGroupId <> AValue then begin
+  if FGroupId <> AValue then
+  begin
     FGroupId := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
@@ -437,7 +462,8 @@ end;
 
 procedure TListGroup.SetHeaderAlign(AValue: TAlignment);
 begin
-  if FHeaderAlign <> AValue then begin
+  if FHeaderAlign <> AValue then
+  begin
     FHeaderAlign := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
@@ -445,7 +471,8 @@ end;
 
 procedure TListGroup.SetFooterAlign(AValue: TAlignment);
 begin
-  if FFooterAlign <> AValue then begin
+  if FFooterAlign <> AValue then
+  begin
     FFooterAlign := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
@@ -453,7 +480,8 @@ end;
 
 procedure TListGroup.SetState(AValue: TListGroupStateSet);
 begin
-  if FState <> AValue then begin
+  if FState <> AValue then
+  begin
     FState := AValue;
     TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
   end;
@@ -481,7 +509,7 @@ constructor TListGroup.Create(ACollection: TCollection);
 begin
   inherited Create(ACollection);
   fGroupID := TListGroups(Collection).NextGroupID;
-  fTitleImage:=-1;
+  fTitleImage := -1;
   TListGroups(Collection).SetNextGroup;
   TSGJListView(TListGroups(Collection).Owner).UpdateGroups();
 end;
@@ -545,7 +573,7 @@ procedure TSGJListView.SetTileSubcaption(AItem: integer);
 var
   TileInfo: TLVTILEINFO;
   i, j, k: integer;
-  {$ENDIF}
+{$ENDIF}
 begin
   {$IFDEF MSWindows}
   //Create Columns
@@ -554,7 +582,7 @@ begin
     fTileColumns[i] := i;
   //Set Tile Info for all items
 
-  k := Items.Count-1;
+  k := Items.Count - 1;
   j := 0;
   if AItem <> -1 then
   begin
@@ -579,7 +607,7 @@ procedure TSGJListView.EnableTileView();
 {$IFDEF MSWindows}
 var
   lvSize: TLVTILEVIEWINFO;
-  {$ENDIF}
+{$ENDIF}
 begin
   {$IFDEF MSWindows}
 
@@ -604,8 +632,7 @@ begin
 
 
   lvSize.rcLabelMargin := Rect(TileOptions.LabelMargins.Left,
-    TileOptions.LabelMargins.Top,
-    TileOptions.LabelMargins.Right,
+    TileOptions.LabelMargins.Top, TileOptions.LabelMargins.Right,
     TileOptions.LabelMargins.Bottom);
   // Apply tile size
   SendMessage(self.Handle, LVM_SETTILEVIEWINFO, 0, LPARAM(@lvSize));
@@ -630,25 +657,26 @@ var
 begin
   inherited Create(AOwner);
   onCreateItemClass := @DoCreateItemClass;
-  onAdvancedCustomDraw:=@doAdvancedCustomDraw;
+  onAdvancedCustomDraw := @doAdvancedCustomDraw;
 
   fTileOpt := TTileOptions.Create;
   ftileOpt.fLabelMargins := TTileLabelMargins.Create;
-  {$IFDEF MSWindows}
   fGroups := TListGroups.Create(self);
-  if fGrupView then begin
+  {$IFDEF MSWindows}
+  if fGrupView then
+  begin
     SetGroupView(fGrupView);
     UpdateGroups();
   end;
   if HandleAllocated then
-     if fGrupView then
-        SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
+    if fGrupView then
+      SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
   {$ENDIF}
 
 end;
 
 procedure TSGJListView.doAdvancedCustomDraw(Sender: TCustomListView;
-  const ARect: TRect; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
+  const ARect: TRect; Stage: TCustomDrawStage; var DefaultDraw: boolean);
 begin
 
 end;
@@ -664,33 +692,24 @@ end;
 procedure TSGJListView.Loaded;
 {$IFDEF MSWindows}
 var
- h:THandle;
- i:integer;
- {$ENDIF}
+  h: THandle;
+  i: integer;
+{$ENDIF}
 begin
   inherited Loaded;
 
   {$IFDEF MSWindows}
-  if StyleName=snDark then
-  begin
-   SetWindowTheme(self.handle, 'DarkMode_Explorer', nil);
-   h:=ListView_GetHeader(handle);
-   SetWindowTheme(h, 'DarkMode_ItemsView', NIL);
-   SetWindowSubclass(self.Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW, 0);
-  end;
-   if StyleName=snLight then
-   begin
-        SetWindowTheme(handle, 'Explorer', nil);
-        h:=ListView_GetHeader(handle);
-        SetWindowTheme(h, 'ItemsView', NIL);
-   end;
-
-
+  fOldColor:=Color;
+  if Font.Color=clDefault then
+  fOldFontColor:=GetDefaultColor(dctFont)
+  else
+  fOldFontColor:=Font.Color;
+  SetStyle(StyleName);
 
   if fGrupView then
   begin
-     UpdateGroups();
-     SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
+    UpdateGroups();
+    SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
   end;
   {$ENDIF}
 
@@ -718,14 +737,14 @@ begin
   FViewStyle := AValue;
   case AValue of
     lvsReport: begin
-      ViewStyle:=vsList;
-      ViewStyle:=vsReport;
+      ViewStyle := vsList;
+      ViewStyle := vsReport;
     end;
-    lvsIcon:ViewStyle:=vsIcon;
-    lvsSmallIcon: ViewStyle:=vsSmallIcon;
-    lvsList: ViewStyle:=vsList;
+    lvsIcon: ViewStyle := vsIcon;
+    lvsSmallIcon: ViewStyle := vsSmallIcon;
+    lvsList: ViewStyle := vsList;
     lvsTile: begin
-      ViewStyle:=vsReport;
+      ViewStyle := vsReport;
       if HandleAllocated then SetTileView;
     end;
   end;
@@ -737,10 +756,12 @@ begin
   fGrupView := AValue;
   {$IfDef MSWindows}
   if AValue = True then
-    SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 1, 0)
+  begin
+    SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 1, 0);
+    UpdateGroups()
+  end
   else
     SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 0, 0);
-  UpdateGroups();
   {$EndIf}
 end;
 
@@ -756,93 +777,93 @@ var
   LvGroup: TLVGROUP;
   i: integer;
   LVITEMW: TLVITEMW;
-  {$EndIf}
+{$EndIf}
 begin
   {$IfDef MSWindows}
   if HandleAllocated then
     ListView_RemoveAllGroups(Handle);
   if HandleAllocated then
-     SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 0, 0);
+    SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 0, 0);
 
 
 
-    //if Groups.Count > 0 then
-      for i := Groups.Count - 1 downto 0 do
+  //if Groups.Count > 0 then
+  for i := Groups.Count - 1 downto 0 do
+  begin
+    //ListView_RemoveGroup(Handle, Groups.Items[i].GroupID);
+
+    FillChar(LvGroup, SizeOf(TLVGROUP), 0);
+    with LvGroup do
+    begin
+      cbSize := SizeOf(TLVGROUP);
+      mask := LVGF_ALIGN or LVGF_GROUPID or LVGF_STATE or LVGF_HEADER;
+
+      if Groups.Items[i].Footer <> '' then
+        mask := mask or LVGF_FOOTER;
+
+      if Groups.Items[i].Subtitle <> '' then
+        mask := mask or LVGF_SUBTITLE;
+
+      if Groups.Items[i].fTitleImage > -1 then
       begin
-        //ListView_RemoveGroup(Handle, Groups.Items[i].GroupID);
-
-        FillChar(LvGroup, SizeOf(TLVGROUP), 0);
-        with LvGroup do
-        begin
-          cbSize := SizeOf(TLVGROUP);
-          mask := LVGF_ALIGN or LVGF_GROUPID or LVGF_STATE or LVGF_HEADER;
-
-          if Groups.Items[i].Footer <> '' then
-            mask := mask or LVGF_FOOTER;
-
-          if Groups.Items[i].Subtitle <> '' then
-            mask := mask or LVGF_SUBTITLE;
-
-          if Groups.Items[i].fTitleImage >-1 then
-          begin
-          mask := mask or LVGF_TITLEIMAGE;
-          iTitleImage := Groups.Items[i].TitleImage;
-          end;
-
-          pszHeader := pwidechar(WideString(Groups.Items[i].Header));
-          cchHeader := Length(LvGroup.pszHeader);
-
-          pszFooter := pwidechar(WideString(Groups.Items[i].Footer));
-          cchFooter := Length(LvGroup.pszFooter);
-
-          pszSubtitle := pwidechar(WideString(Groups.Items[i].Subtitle));
-          cchSubtitle := Length(LvGroup.pszSubtitle);
-
-          iGroupId := Groups.Items[i].GroupID;
-
-
-          if lgsNormal in Groups.Items[i].State then
-            state := state or LVGS_NORMAL;
-
-          if lgsCollapsible in Groups.Items[i].State then
-            state := state or LVGS_COLLAPSIBLE;
-
-          if lgsCollapsed in Groups.Items[i].State then
-            state := state or LVGS_COLLAPSED;
-
-          if lgsNoHeader in Groups.Items[i].State then
-            state := state or LVGS_NOHEADER;
-
-          if lgsHidden in Groups.Items[i].State then
-            state := state or LVGS_HIDDEN;
-
-          case Groups.Items[i].HeaderAlign of
-            taLeftJustify: uAlign := LVGA_HEADER_LEFT;
-            taCenter: uAlign := LVGA_HEADER_CENTER;
-            taRightJustify: uAlign := LVGA_HEADER_RIGHT;
-          end;
-          case Groups.Items[i].FooterAlign of
-            taLeftJustify: uAlign := uAlign or LVGA_FOOTER_LEFT;
-            taCenter: uAlign := uAlign or LVGA_FOOTER_CENTER;
-            taRightJustify: uAlign := uAlign or LVGA_FOOTER_RIGHT;
-          end;
-
-          if (Groups.Items[i].HeaderAlign = taCenter) and
-            (Groups.Items[i].TitleImage <> -1) then
-          begin
-            mask := mask or LVGF_DESCRIPTIONTOP or LVGF_DESCRIPTIONBOTTOM;
-            pszHeader := pwidechar('');
-            pszSubtitle := pwidechar('');
-            pszDescriptionTop := pwidechar(WideString(Groups.Items[i].Header));
-            cchDescriptionTop := Length(LvGroup.pszDescriptionTop);
-            pszDescriptionBottom := pwidechar(WideString(Groups.Items[i].Subtitle));
-            cchDescriptionBottom := Length(LvGroup.pszDescriptionBottom);
-          end;
-
-        end;
-        SendMessage(Handle, LVM_INSERTGROUP, 0, longint(@LvGroup));
-
+        mask := mask or LVGF_TITLEIMAGE;
+        iTitleImage := Groups.Items[i].TitleImage;
       end;
+
+      pszHeader := pwidechar(WideString(Groups.Items[i].Header));
+      cchHeader := Length(LvGroup.pszHeader);
+
+      pszFooter := pwidechar(WideString(Groups.Items[i].Footer));
+      cchFooter := Length(LvGroup.pszFooter);
+
+      pszSubtitle := pwidechar(WideString(Groups.Items[i].Subtitle));
+      cchSubtitle := Length(LvGroup.pszSubtitle);
+
+      iGroupId := Groups.Items[i].GroupID;
+
+
+      if lgsNormal in Groups.Items[i].State then
+        state := state or LVGS_NORMAL;
+
+      if lgsCollapsible in Groups.Items[i].State then
+        state := state or LVGS_COLLAPSIBLE;
+
+      if lgsCollapsed in Groups.Items[i].State then
+        state := state or LVGS_COLLAPSED;
+
+      if lgsNoHeader in Groups.Items[i].State then
+        state := state or LVGS_NOHEADER;
+
+      if lgsHidden in Groups.Items[i].State then
+        state := state or LVGS_HIDDEN;
+
+      case Groups.Items[i].HeaderAlign of
+        taLeftJustify: uAlign := LVGA_HEADER_LEFT;
+        taCenter: uAlign := LVGA_HEADER_CENTER;
+        taRightJustify: uAlign := LVGA_HEADER_RIGHT;
+      end;
+      case Groups.Items[i].FooterAlign of
+        taLeftJustify: uAlign := uAlign or LVGA_FOOTER_LEFT;
+        taCenter: uAlign := uAlign or LVGA_FOOTER_CENTER;
+        taRightJustify: uAlign := uAlign or LVGA_FOOTER_RIGHT;
+      end;
+
+      if (Groups.Items[i].HeaderAlign = taCenter) and
+        (Groups.Items[i].TitleImage <> -1) then
+      begin
+        mask := mask or LVGF_DESCRIPTIONTOP or LVGF_DESCRIPTIONBOTTOM;
+        pszHeader := pwidechar('');
+        pszSubtitle := pwidechar('');
+        pszDescriptionTop := pwidechar(WideString(Groups.Items[i].Header));
+        cchDescriptionTop := Length(LvGroup.pszDescriptionTop);
+        pszDescriptionBottom := pwidechar(WideString(Groups.Items[i].Subtitle));
+        cchDescriptionBottom := Length(LvGroup.pszDescriptionBottom);
+      end;
+
+    end;
+    SendMessage(Handle, LVM_INSERTGROUP, 0, longint(@LvGroup));
+
+  end;
 
 
   for I := 0 to Items.Count - 1 do
@@ -858,10 +879,10 @@ begin
 
   end;
 
-    if HandleAllocated then
+  if HandleAllocated then
     if fGrupView then
-     SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
-    {$EndIf}
+      SendMessage(Handle, LVM_ENABLEGROUPVIEW, 1, 0);
+  {$EndIf}
 
 end;
 
@@ -905,6 +926,7 @@ begin
   end;
 
 end;
+
 function TSGJListView.GetMyItems: TSGJListItems;
 begin
   Result := TSGJListItems(inherited Items);
@@ -1136,111 +1158,177 @@ end;
 
 procedure TSGJListView.DrawDarkGroupHeader();
 var
-R,LR:trect;
-i:integer;
-ImgWidth,ImgHeight:integer;
-LMargin, RMargin, TMargn:integer;
-collapse:integer;
+  R, LR: trect;
+  i: integer;
+  ImgWidth, ImgHeight: integer;
+  LMargin, RMargin, TMargn: integer;
+  collapse: integer;
 begin
   {$IFDEF MSWINDOWS}
-  canvas.font.Color:=clSilver;
-  Canvas.Brush.Color:=Color;
-  for i:=0 to Groups.Count-1 do
+  canvas.font.Color := clSilver;
+  Canvas.Brush.Color := Color;
+  for i := 0 to Groups.Count - 1 do
   begin
-   ImgWidth:=0;
-   ListView_GetGroupRect(handle,Groups.Items[i].GroupID,LVGGR_LABEL,R);
-   LMargin:=R.Left;
-   TMargn:=R.Top;
-   if (GroupHeaderImages<>nil) and (Groups.Items[i].TitleImage<>-1)
-   then
-      ImgWidth:= GroupHeaderImages.Width;
-      ImgHeight:=GroupHeaderImages.Height;
-
-   if Groups.Items[i].HeaderAlign=taLeftJustify then
-      begin
-
-   canvas.TextOut(R.Left+ImgWidth,R.Top,Groups.Items[i].Header);
-      if Groups.Items[i].Subtitle<>'' then
-         canvas.TextOut(R.Left+ImgWidth,R.Top+Canvas.TextHeight('T'),Groups.Items[i].Subtitle);
-
-         end;
-   if (Groups.Items[i].HeaderAlign=taCenter) then
-      begin
-        ListView_GetGroupRect(handle,Groups.Items[i].GroupID,LVGGR_HEADER,R);
-        if lgsCollapsible in Groups.Items[i].State then
-        collapse:=ScaleX(16,96) else collapse:=0;
-
-
-        if Groups.Items[i].TitleImage=-1 then
-        begin
-        canvas.TextOut((R.Width-collapse) div 2  - (Canvas.TextWidth(Groups.Items[i].Header) div 2),TMargn,Groups.Items[i].Header);
-        if Groups.Items[i].Subtitle<>'' then
-           canvas.TextOut((R.Width -collapse) div 2- (Canvas.TextWidth(Groups.Items[i].Subtitle) div 2),TMargn+Canvas.TextHeight('T'),Groups.Items[i].Subtitle);
-        end else
-        begin           //ImgWidth div  2+(R.Width - collapse)- LMargin -((R.Width - collapse) div 4) - (Canvas.TextWidth(Groups.Items[i].Header) div 2)
-          canvas.TextOut(10+(R.Width - collapse) -((R.Width - collapse - ImgWidth) div 4 ) - (Canvas.TextWidth(Groups.Items[i].Header) div 2),TMargn,Groups.Items[i].Header);
-          if Groups.Items[i].Subtitle<>'' then
-             canvas.TextOut(10+(R.Width - collapse)-  ((R.Width - collapse - ImgWidth) div 4)- (Canvas.TextWidth(Groups.Items[i].Subtitle) div 2),TMargn+ImgHeight div 2,Groups.Items[i].Subtitle);
-         end;
-
-        end;
-
-
-    if (Groups.Items[i].HeaderAlign=taRightJustify) then
+    ImgWidth := 0;
+    ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_LABEL, R);
+    LMargin := R.Left;
+    TMargn := R.Top;
+    if (GroupHeaderImages <> nil) and (Groups.Items[i].TitleImage <> -1) then
     begin
-    ListView_GetGroupRect(handle,Groups.Items[i].GroupID,LVGGR_HEADER,R);
+      ImgWidth := GroupHeaderImages.Width;
+      ImgHeight := GroupHeaderImages.Height;
+    end;
+
+    if Groups.Items[i].HeaderAlign = taLeftJustify then
+    begin
+
+      canvas.TextOut(R.Left + ImgWidth, R.Top, Groups.Items[i].Header);
+      if Groups.Items[i].Subtitle <> '' then
+        canvas.TextOut(R.Left + ImgWidth, R.Top + Canvas.TextHeight('T'),
+          Groups.Items[i].Subtitle);
+
+    end;
+    if (Groups.Items[i].HeaderAlign = taCenter) then
+    begin
+      ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_HEADER, R);
       if lgsCollapsible in Groups.Items[i].State then
-      collapse:=ScaleX(16,96) else collapse:=0;
-      canvas.TextOut(R.Width-LMargin-(Canvas.TextWidth(Groups.Items[i].Header))-collapse,TMargn,Groups.Items[i].Header);
-      if Groups.Items[i].Subtitle<>'' then
-         canvas.TextOut(R.Width-LMargin-(Canvas.TextWidth(Groups.Items[i].Subtitle))-collapse,TMargn+Canvas.TextHeight('T'),Groups.Items[i].Subtitle);
+        collapse := ScaleX(16, 96)
+      else
+        collapse := 0;
+
+
+      if Groups.Items[i].TitleImage = -1 then
+      begin
+        canvas.TextOut((R.Width - collapse) div 2 -
+          (Canvas.TextWidth(Groups.Items[i].Header) div 2), TMargn, Groups.Items[i].Header);
+        if Groups.Items[i].Subtitle <> '' then
+          canvas.TextOut((R.Width - collapse) div 2 -
+            (Canvas.TextWidth(Groups.Items[i].Subtitle) div 2), TMargn + Canvas.TextHeight(
+            'T'), Groups.Items[i].Subtitle);
+      end
+      else
+      begin
+        //ImgWidth div  2+(R.Width - collapse)- LMargin -((R.Width - collapse) div 4) - (Canvas.TextWidth(Groups.Items[i].Header) div 2)
+        canvas.TextOut(10 + (R.Width - collapse) -
+          ((R.Width - collapse - ImgWidth) div 4) -
+          (Canvas.TextWidth(Groups.Items[i].Header) div 2), TMargn, Groups.Items[i].Header);
+        if Groups.Items[i].Subtitle <> '' then
+          canvas.TextOut(10 + (R.Width - collapse) -
+            ((R.Width - collapse - ImgWidth) div 4) -
+            (Canvas.TextWidth(Groups.Items[i].Subtitle) div 2), TMargn + ImgHeight div
+            2, Groups.Items[i].Subtitle);
+      end;
+
     end;
 
 
+    if (Groups.Items[i].HeaderAlign = taRightJustify) then
+    begin
+      ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_HEADER, R);
+      if lgsCollapsible in Groups.Items[i].State then
+        collapse := ScaleX(16, 96)
+      else
+        collapse := 0;
+      canvas.TextOut(R.Width - LMargin - (Canvas.TextWidth(Groups.Items[i].Header)) -
+        collapse, TMargn, Groups.Items[i].Header);
+      if Groups.Items[i].Subtitle <> '' then
+        canvas.TextOut(R.Width - LMargin -
+          (Canvas.TextWidth(Groups.Items[i].Subtitle)) - collapse, TMargn +
+          Canvas.TextHeight('T'), Groups.Items[i].Subtitle);
+    end;
+
+    if Groups.Items[i].Footer <> '' then
+    begin
+      if (Groups.Items[i].FooterAlign = taLeftJustify) then
+      begin
+        if IsGroupCollapsed(self.Handle,Groups.Items[i].GroupID) then
+        begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_HEADER, R);
+          canvas.TextOut(12, R.Top + R.Height, Groups.Items[i].Footer);
+        end else begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_GROUP, R);
+          canvas.TextOut(12, R.Top + R.Height - Canvas.TextHeight('T'), Groups.Items[i].Footer);
+        end;
+      end
+      else
+      if (Groups.Items[i].FooterAlign = taCenter) then
+      begin
+        if IsGroupCollapsed(self.Handle,Groups.Items[i].GroupID) then
+        begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_HEADER, R);
+          canvas.TextOut(6+R.Width div 2 -
+          (Canvas.TextWidth(Groups.Items[i].Footer) div 2), R.Top + R.Height, Groups.Items[i].Footer);
+        end else begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_GROUP, R);
+          canvas.TextOut(6+R.Width div 2 -
+          (Canvas.TextWidth(Groups.Items[i].Footer) div 2), R.Top + R.Height - Canvas.TextHeight('T'), Groups.Items[i].Footer);
+        end;
+      end
+      else
+      if (Groups.Items[i].FooterAlign = taRightJustify) then
+      begin
+        if IsGroupCollapsed(self.Handle,Groups.Items[i].GroupID) then
+        begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_HEADER, R);
+          canvas.TextOut(R.Width -
+          (Canvas.TextWidth(Groups.Items[i].Footer))-2, R.Top + R.Height, Groups.Items[i].Footer);
+        end else begin
+          ListView_GetGroupRect(handle, Groups.Items[i].GroupID, LVGGR_GROUP, R);
+          canvas.TextOut(R.Width -
+          (Canvas.TextWidth(Groups.Items[i].Footer))-2, R.Top + R.Height - Canvas.TextHeight('T'), Groups.Items[i].Footer);
+        end;
+      end;
+
+    end;
   end;
   {$ENDIF}
 end;
 
-function TSGJListView.CustomDraw(const ARect: TRect; AStage: TCustomDrawStage): Boolean;
+function TSGJListView.CustomDraw(const ARect: TRect; AStage: TCustomDrawStage): boolean;
 var
-R:trect;
+  R: trect;
 begin
-  result:=(inherited CustomDraw(ARect, AStage));
-  if (AStage=cdPostPaint) and (StyleName=snDark) and (GroupView) then
+  Result := (inherited CustomDraw(ARect, AStage));
+  if (AStage = cdPostPaint) and (StyleName = snDark) and (GroupView) then
   begin
-     DrawDarkGroupHeader();
+    DrawDarkGroupHeader();
   end;
 
 end;
 
 procedure TSGJListView.SetStyle(AValue: TStyleName);
 var
-h:THandle;
+  h: THandle;
 begin
-  if fStyleName=AValue then exit;
-  fStyleName:=AValue;
+  fStyleName := AValue;
   {$IFDEF MSWINDOWS}
-  if fStyleName=snDefault then
+  if fStyleName = snDefault then
   begin
     RemoveWindowSubclass(Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW);
     SetWindowTheme(handle, '', nil);
-    h:=ListView_GetHeader(handle);
-    SetWindowTheme(h, '', NIL);
+    h := ListView_GetHeader(handle);
+    SetWindowTheme(h, '', nil);
+    Color:=fOldColor;
+    Font.Color:=fOldFontColor;
   end;
-   if fStyleName=snDark then
-   begin
-  SetWindowTheme(self.handle, 'DarkMode_Explorer', nil);
-  h:=ListView_GetHeader(handle);
-  SetWindowTheme(h, 'DarkMode_ItemsView', NIL);
-  SetWindowSubclass(self.Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW, 0);
- end;
-
-  if fStyleName=snLight then
+  if fStyleName = snDark then
   begin
-       SetWindowTheme(handle, 'Explorer', nil);
-       h:=ListView_GetHeader(handle);
-       SetWindowTheme(h, 'Explorer', NIL);
-       RemoveWindowSubclass(Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW);
+    SetWindowTheme(self.handle, 'DarkMode_Explorer', nil);
+    h := ListView_GetHeader(handle);
+    SetWindowTheme(h, 'DarkMode_ItemsView', nil);
+    SetWindowSubclass(self.Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW, 0);
+    Color:=$002a2a2a;
+    Font.Color:=clWhite;
+  end;
+
+  if fStyleName = snLight then
+  begin
+    SetWindowTheme(handle, 'Explorer', nil);
+    h := ListView_GetHeader(handle);
+    SetWindowTheme(h, 'Explorer', nil);
+    RemoveWindowSubclass(Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW);
+    Color:=clWhite;
+    Font.Color:=clBlack;
   end;
   {$ENDIF}
 end;
@@ -1249,4 +1337,5 @@ end;
 initialization
   {$I resources/SGJ.ListView.lrs}
 {$ENDIF}
+
 end.

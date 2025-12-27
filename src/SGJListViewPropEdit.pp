@@ -59,10 +59,12 @@ type
     LabelStateIndex: TLabel;
     TreeView1: TTreeView;
     procedure BtnNewItemClick(Sender: TObject);
+    procedure cbGroupsSelect(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
     procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure LabelStateIndexClick(Sender: TObject);
     procedure TreeView1SelectionChanged(Sender: TObject);
     procedure btnApplyClick(Sender: TObject);
     procedure btnDeleteClick(Sender: TObject);
@@ -156,6 +158,11 @@ begin
      TreeView1.Selected := TreeView1.Items[0];
 end;
 
+procedure TSGJListViewItemsEditorForm.LabelStateIndexClick(Sender: TObject);
+begin
+
+end;
+
 procedure TSGJListViewItemsEditorForm.FormClose(Sender: TObject;
   var CloseAction: TCloseAction);
 begin
@@ -181,6 +188,11 @@ begin
 
   edtText.SetFocus;
   edtText.SelectAll;
+end;
+
+procedure TSGJListViewItemsEditorForm.cbGroupsSelect(Sender: TObject);
+begin
+   edtIndexStateEditingDone(cbGroups);
 end;
 
 procedure TSGJListViewItemsEditorForm.Edit1Change(Sender: TObject);
