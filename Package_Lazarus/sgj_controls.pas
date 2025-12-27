@@ -9,7 +9,8 @@ interface
 
 uses
   SGJ.LinkLabel, SGJ.Button, SGJ.SimpleButton, SGJ.CheckBox, SGJ.Panel, 
-  SGJ.ListView, SGJ.ShellTreeView, SGJListViewPropEdit, LazarusPackageIntf;
+  SGJ.ListView, SGJ.ShellTreeView, SGJListViewPropEdit, SGJ.Win32PopupMenu, 
+  LazarusPackageIntf;
 
 implementation
 
