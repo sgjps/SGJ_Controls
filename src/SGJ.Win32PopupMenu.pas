@@ -78,7 +78,7 @@ type
     ColorBGSelected: TColor;
     ColorBorder: TColor;
     ColorTextDisabled: TColor;
-    constructor Create(AForm: TForm);
+    constructor Create(AForm: TForm;AEnableWndCall: boolean);
     destructor Destroy; override;
     procedure CreateMenu(APopup: TMenu);
   end;
@@ -262,11 +262,12 @@ begin
   inherited;
 end;
 
-constructor TWin32Menu.Create(AForm: TForm);
+constructor TWin32Menu.Create(AForm: TForm;AEnableWndCall: boolean);
 begin
   fForm := AForm;
   fHandle := AForm.Handle;
   {$IFDEF MSWINDOWS}
+  if AEnableWndCall then
   PrevWndProc := Windows.WNDPROC(SetWindowLongPtr(fHandle, GWL_WNDPROC,
     PtrUInt(@WndCallback)));
   {$EndIf}
