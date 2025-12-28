@@ -1,4 +1,4 @@
-unit SGJ.Win32PopupMenu;
+unit SGJ.Win32popupMenu;
 
 {$mode ObjFPC}{$H+}
 
@@ -64,7 +64,7 @@ const
   OBJID_MENU = DWORD($FFFFFFFD);
 
 type
-  TWin32Menu = class
+  TSGJWin32Menu = class
   private
     fPopupMenu: TMenu;
     fHandle: THandle;
@@ -87,7 +87,7 @@ var
   {$IFDEF MSWINDOWS}
   PrevWndProc: Windows.WNDProc;
   {$EndIf}
-  Win32Menu: TWin32Menu;
+  Win32Menu: TSGJWin32Menu;
 
 
 implementation
@@ -254,7 +254,7 @@ begin
   Result := CallWindowProc(PrevWndProc, Ahwnd, uMsg, WParam, LParam);
 end;
 {$EndIf}
-destructor TWin32Menu.Destroy;
+destructor TSGJWin32Menu.Destroy;
 begin
   {$IFDEF MSWINDOWS}
   SetWindowLongPtr(fhandle, GWLP_WNDPROC, PtrUInt(PrevWndProc));
@@ -262,7 +262,7 @@ begin
   inherited;
 end;
 
-constructor TWin32Menu.Create(AForm: TForm;AEnableWndCall: boolean);
+constructor TSGJWin32Menu.Create(AForm: TForm;AEnableWndCall: boolean);
 begin
   fForm := AForm;
   fHandle := AForm.Handle;
@@ -338,7 +338,7 @@ begin
   Result := popupMenu;
 end;
 {$EndIf}
-procedure TWin32Menu.CreateMenu(APopup: TMenu);
+procedure TSGJWin32Menu.CreateMenu(APopup: TMenu);
 var
   pt: TPoint;
   //MII: TMenuItemInfo;
