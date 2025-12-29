@@ -88,7 +88,7 @@ var
   PrevWndProc: Windows.WNDProc;
   {$EndIf}
   Win32Menu: TSGJWin32Menu;
-
+  WinPopupMenu:TSGJWin32Menu;
 
 implementation
 {$IFDEF MSWINDOWS}
@@ -138,7 +138,13 @@ begin
           else
           if Win32Menu.fPopupMenu.Items[i].count>0 then
              ExecuteSubItems(Win32Menu.fPopupMenu.Items[i]);
-
+    if WinPopupMenu.fPopupMenu is TMenu then
+      for i := 0 to WinPopupMenu.fPopupMenu.Items.Count - 1 do
+        if LOWORD(wParam) = WinPopupMenu.fPopupMenu.Items[i].Command then
+          WinPopupMenu.fPopupMenu.Items[i].Click
+        else
+        if WinPopupMenu.fPopupMenu.Items[i].count>0 then
+           ExecuteSubItems(WinPopupMenu.fPopupMenu.Items[i]);
   end;
   if Win32Menu.CustomColors then
   begin
