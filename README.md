@@ -23,4 +23,4 @@ TWin32Menu - Component for Lazarus. Replaces TMainMenu and TPopupMenu with nativ
 
 Homepage: [SGJ Controls for Lazarus and Delphi](https://www.hiperapps.com/en/ctrls/SGJ_Controls_for_Lazarus_and_Delphi)
 
-[PayPal](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
+[Donate](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
