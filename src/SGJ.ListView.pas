@@ -40,11 +40,11 @@ type
 
   ////Copy from ComCtrls->listitems.inc | Extended on GroupID
   TLazItemInfo = record
+    GroupID: integer;
     ImageIndex: integer;
     StateIndex: integer;
     OverlayIndex: integer;
     SubItemCount: integer;
-    GroupID: integer;
   end;
 
   //Custom View Style
@@ -641,14 +641,16 @@ end;
 
 procedure TSGJListView.SetTileView();
 begin
+
   EnableTileView();
 
 
 
   {$IFDEF MSWindows}
   SendMessage(self.Handle, LVM_SETVIEW, LV_VIEW_TILE, 0);
-  {$ENDIF}
   SetTileSubcaption(-1);
+  {$ENDIF}
+
 end;
 
 constructor TSGJListView.Create(AOwner: TComponent);
@@ -736,11 +738,8 @@ procedure TSGJListView.SetViewStyleEx(AValue: TSGJViewStyle);
 begin
   FViewStyle := AValue;
   case AValue of
-    lvsReport: begin
-      ViewStyle := vsList;
-      ViewStyle := vsReport;
-    end;
-    lvsIcon: ViewStyle := vsIcon;
+    lvsReport: begin ViewStyle := vsIcon;ViewStyle := vsReport;end;
+    lvsIcon: ViewStyle:= vsIcon;
     lvsSmallIcon: ViewStyle := vsSmallIcon;
     lvsList: ViewStyle := vsList;
     lvsTile: begin
@@ -991,7 +990,7 @@ procedure TSGJListItems.ReadLazData(Stream: TStream);
 var
   I, J: integer;
   ItemInfo: TLazItemInfo;
-  ListItem: TListItem;
+  ListItem: TSGJListItem;//TListItem;
   Size, ItemCount, SubCount: integer;
   StartPos: int64;
 
@@ -1058,7 +1057,7 @@ begin
     begin
       for I := 0 to Count - 1 do
       begin
-        ListItem := TListItem(Item[I]);
+        ListItem := Item[I];
         if ListItem.SubItems = nil then Continue;
 
         for J := 0 to ListItem.SubItems.Count - 1 do
