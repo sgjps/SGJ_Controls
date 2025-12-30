@@ -18,7 +18,7 @@ TSGJShellTreeView - Directory TreeView [Lazarus]
 
 TSGJListView - ListView for Lazarus with Tile and Groups support on Windows. Compatible with other platforms[tile and groups are ignored] [Lazarus]
 
-TWin32Menu - Simple class unit for Lazarus. Replaces TMainMenu and TPopupMenu with native Windows Menus. 
+TWin32Menu - Component for Lazarus. Replaces TMainMenu and TPopupMenu with native Windows Menus. 
 
 
 Homepage: https://www.hiperapps.com/en/ctrls/SGJ_Controls_for_Lazarus_and_Delphi
