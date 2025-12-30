@@ -1,3 +1,20 @@
+{
+*****************************************************************************
+This file is part of SGJ Controls
+
+  Author: Grzegorz Skulimowski
+  Web:    www.hiperapps.com
+  Web:    www.sgjps.com
+  Mail:   sgj@sgjps.com
+
+  History
+    Created: 2025/12/30
+
+
+
+*****************************************************************************
+}
+
 unit SGJ.Win32popupMenu;
 
 {$mode ObjFPC}{$H+}
@@ -9,9 +26,55 @@ uses
   Windows, uxTheme,
   {$EndIf}
   SysUtils, Menus, Graphics, Forms, Controls, Dialogs, LCLProc,
-  types;
+  types, Classes, LMessages;
 
-{$IFDEF MSWINDOWS}
+
+  {$IFDEF MSWINDOWS}
+type
+  TSGJNativeWin32Menu = class;
+  {$EndIf}
+
+type
+  TSGJWin32Menu = class(TComponent)
+  private
+    fEnabled: boolean;
+    fOwner: TForm;
+    fCustomColors: boolean;
+    fColorMenu: TColor;
+    fColorText: TColor;
+    fColorBG: TColor;
+    fColorBGHot: TColor;
+    fColorBGSelected: TColor;
+    fColorBorder: TColor;
+    fColorTextDisabled: TColor;
+    Hooks: TList;
+    fFormMainMenu: TMainMenu;
+    {$IFDEF MSWINDOWS}
+    Win32Menu: TSGJNativeWin32Menu;
+    WinPopupMenu: TSGJNativeWin32Menu;
+    procedure HookAllControls(Parent: TWinControl; AHooks: TList);
+    {$EndIF}
+    procedure SetEnabled(AValue: boolean);
+  protected
+    procedure Loaded; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  published
+    property MainMenuCustomColors: boolean read fCustomColors write fCustomColors;
+    property MainMenuColorMenu: TColor read fColorMenu write fColorMenu;
+    property MainMenuColorText: TColor read fColorText write fColorText;
+    property MainMenuColorBG: TColor read fColorBG write fColorBG;
+    property MainMenuColorBGHot: TColor read fColorBGHot write fColorBGHot;
+    property MainMenuColorBGSelected: TColor read fColorBGSelected
+      write fColorBGSelected;
+    property MainMenuColorBorder: TColor read fColorBorder write fColorBorder;
+    property MainMenuColorTextDisabled: TColor
+      read fColorTextDisabled write fColorTextDisabled;
+    property Enabled: boolean read fEnabled write SetEnabled;
+  end;
+
+  {$IFDEF MSWINDOWS}
 type
   PUAHMENU = ^UAHMENU;
 
@@ -56,15 +119,15 @@ type
     umi: UAHMENUITEM;
   end;
   PUAHDRAWMENUITEM = ^UAHDRAWMENUITEM;
-  {$EndIf}
+
 const
   WM_UAHDRAWMENU = $0091;
   WM_UAHDRAWMENUITEM = $0092;
   WM_UAHMEASUREMENUITEM = $0093;
-  OBJID_MENU = DWORD($FFFFFFFD);
+  OBJID_MENU = $FFFFFFFD;
 
 type
-  TSGJWin32Menu = class
+  TSGJNativeWin32Menu = class
   private
     fPopupMenu: TMenu;
     fHandle: THandle;
@@ -78,27 +141,43 @@ type
     ColorBGSelected: TColor;
     ColorBorder: TColor;
     ColorTextDisabled: TColor;
-    constructor Create(AForm: TForm;AEnableWndCall: boolean);
+    constructor Create(AForm: TForm);
     destructor Destroy; override;
     procedure CreateMenu(APopup: TMenu);
   end;
 
-var
-  {$IFDEF MSWINDOWS}
+type
+  TWndProcHook = class
+  private
+    FControl: TWinControl;
+    FOldProc: TWndMethod;
+    FWin32Menu: TSGJWin32Menu;
+    procedure NewWndProc(var Msg: TLMessage);
+  public
+    constructor Create(AControl: TWinControl; AW32Menu: TSGJWin32Menu);
+  end;
+
+  var
   PrevWndProc: Windows.WNDProc;
   {$EndIf}
-  Win32Menu: TSGJWin32Menu;
-  WinPopupMenu:TSGJWin32Menu;
+
+
+
+procedure Register;
 
 implementation
+
+procedure Register;
+begin
+  RegisterComponents('SGJ', [TSGJWin32Menu]);
+end;
+
 {$IFDEF MSWINDOWS}
 function WndCallback(Ahwnd: HWND; uMsg: UINT; wParam: WParam;
   lParam: LParam): LRESULT; stdcall;
 var
-  MenuItem: TMenuItem;
   i: integer;
 
-  DC: HDC;
   R: TRect;
   rcWindow: TRect;
   _Brush: HBRUSH;
@@ -115,38 +194,50 @@ var
   iTextStateID, iBackgroundStateID: integer;
   opts: TDTTOPTS;
   menuTheme: htheme;
+  W32Menu: TSGJWin32Menu;
 
   procedure ExecuteSubItems(AItem: TMenuItem);
   var
-    i:integer;
+    i: integer;
   begin
     for i := 0 to AItem.Count - 1 do
-    if LOWORD(wParam) = AItem.Items[i].Command then
-            AItem.Items[i].Click
-    else
-     if AItem.Count>0 then
-       ExecuteSubItems(AItem.Items[i]) ;
+      if LOWORD(wParam) = AItem.Items[i].Command then
+        AItem.Items[i].Click
+      else
+      if AItem.Count > 0 then
+        ExecuteSubItems(AItem.Items[i]);
   end;
+
 begin
-  if uMsg = WM_COMMAND then
+  W32Menu := TSGJWin32Menu(GetWindowLongPtr(AhWnd, GWLP_USERDATA));
+  if uMsg = WM_CONTEXTMENU then
+     if W32Menu.Enabled then
+     W32Menu.WinPopupMenu.CreateMenu(TForm(W32Menu.fOwner).PopupMenu);
+  if uMsg = WM_COMMAND then     ;
   begin
     if (lParam = 0) and (HIWORD(wParam) = 0) then
-      if Win32Menu.fPopupMenu is TMenu then
-        for i := 0 to Win32Menu.fPopupMenu.Items.Count - 1 do
-          if LOWORD(wParam) = Win32Menu.fPopupMenu.Items[i].Command then
-            Win32Menu.fPopupMenu.Items[i].Click
-          else
-          if Win32Menu.fPopupMenu.Items[i].count>0 then
-             ExecuteSubItems(Win32Menu.fPopupMenu.Items[i]);
-    if WinPopupMenu.fPopupMenu is TMenu then
-      for i := 0 to WinPopupMenu.fPopupMenu.Items.Count - 1 do
-        if LOWORD(wParam) = WinPopupMenu.fPopupMenu.Items[i].Command then
-          WinPopupMenu.fPopupMenu.Items[i].Click
-        else
-        if WinPopupMenu.fPopupMenu.Items[i].count>0 then
-           ExecuteSubItems(WinPopupMenu.fPopupMenu.Items[i]);
+    begin
+      if W32Menu.Enabled then
+      if W32Menu.Win32Menu <> nil then
+        if W32Menu.Win32Menu.fPopupMenu is TMainMenu then
+          for i := 0 to W32Menu.Win32Menu.fPopupMenu.Items.Count - 1 do
+            if LOWORD(wParam) = W32Menu.Win32Menu.fPopupMenu.Items[i].Command then
+              W32Menu.Win32Menu.fPopupMenu.Items[i].Click
+            else
+            if W32Menu.Win32Menu.fPopupMenu.Items[i].Count > 0 then
+              ExecuteSubItems(W32Menu.Win32Menu.fPopupMenu.Items[i]);
+
+      if W32Menu.WinPopupMenu <> nil then
+        if W32Menu.WinPopupMenu.fPopupMenu is TPopupMenu then
+          for i := 0 to W32Menu.WinPopupMenu.fPopupMenu.Items.Count - 1 do
+            if LOWORD(wParam) = W32Menu.WinPopupMenu.fPopupMenu.Items[i].Command then
+              W32Menu.WinPopupMenu.fPopupMenu.Items[i].Click
+            else
+            if W32Menu.WinPopupMenu.fPopupMenu.Items[i].Count > 0 then
+              ExecuteSubItems(W32Menu.WinPopupMenu.fPopupMenu.Items[i]);
+    end;
   end;
-  if Win32Menu.CustomColors then
+  if W32Menu.Win32Menu.CustomColors then
   begin
     if uMsg = WM_UAHDRAWMENU then
     begin
@@ -154,14 +245,14 @@ begin
 
       FillChar(R, SizeOf(R), 0);
       mbi.cbSize := SizeOf(mbi);
-      GetMenuBarInfo(ahWnd, OBJID_MENU, 0, @mbi);
+      GetMenuBarInfo(ahWnd, -3, 0, @mbi);
 
       GetWindowRect(ahWnd, rcWindow);
 
       R := mbi.rcBar;
       Types.OffsetRect(R, -rcWindow.left, -rcWindow.top);
 
-      _Brush := CreateSolidBrush(ColorToRGB(Win32Menu.ColorMenu));
+      _Brush := CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorMenu));
       FillRect(pUDM^._hdc, R, _Brush);
 
 
@@ -173,11 +264,12 @@ begin
       pUDMI := PUAHDRAWMENUITEM(lParam);
 
 
-      g_brItemBackground := CreateSolidBrush(ColorToRGB(Win32Menu.ColorBG));
-      g_brItemBackgroundHot := CreateSolidBrush(ColorToRGB(Win32Menu.ColorBGHot));
+      g_brItemBackground := CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorBG));
+      g_brItemBackgroundHot :=
+        CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorBGHot));
       g_brItemBackgroundSelected :=
-        CreateSolidBrush(ColorToRGB(Win32Menu.ColorBGSelected));
-      g_brItemBorder := CreateSolidBrush(ColorToRGB(Win32Menu.ColorBorder));
+        CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorBGSelected));
+      g_brItemBorder := CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorBorder));
 
       pbrBackground := @g_brItemBackground;
       pbrBorder := @g_brItemBackground;
@@ -239,16 +331,15 @@ begin
       ZeroMemory(@opts, SizeOf(opts));
       opts.dwSize := SizeOf(opts);
       opts.dwFlags := DTT_TEXTCOLOR;
-      opts.crText := ColorToRGB(Win32Menu.ColorText);
+      opts.crText := ColorToRGB(W32Menu.Win32Menu.ColorText);
 
       if iTextStateID <> MBI_DISABLED then
-        opts.crText := ColorToRGB(Win32Menu.ColorText)
+        opts.crText := ColorToRGB(W32Menu.Win32Menu.ColorText)
       else
-        opts.crText := ColorToRGB(Win32Menu.ColorTextDisabled);
+        opts.crText := ColorToRGB(W32Menu.Win32Menu.ColorTextDisabled);
 
       FillRect(pUDMI^.um._hdc, pUDMI^.dis.rcItem, pbrBackground^);
       FrameRect(pUDMI^.um._hdc, pUDMI^.dis.rcItem, pbrBorder^);
-      //DrawThemeText(menuTheme, pUDMI^.um._hdc, MENU_BARITEM, MBI_NORMAL, PWideChar(menuString), mii.cch, dwFlags, 0,pUDMI^.dis.rcItem);
       DrawThemeTextEx(menuTheme, pUDMI^.um._hdc, MENU_BARITEM, MBI_NORMAL,
         pwidechar(menuString), mii.cch, dwFlags, @pUDMI^.dis.rcItem, @opts);
       CloseThemeData(menuTheme);
@@ -259,34 +350,147 @@ begin
 
   Result := CallWindowProc(PrevWndProc, Ahwnd, uMsg, WParam, LParam);
 end;
-{$EndIf}
-destructor TSGJWin32Menu.Destroy;
+
+
+constructor TWndProcHook.Create(AControl: TWinControl; AW32Menu: TSGJWin32Menu);
 begin
+  inherited Create;
+  FControl := AControl;
+
+  FOldProc := AControl.WindowProc;
+  AControl.WindowProc := @NewWndProc;
+  FWin32Menu := AW32Menu;
+end;
+
+
+procedure TSGJWin32Menu.HookAllControls(Parent: TWinControl; AHooks: TList);
+var
+  i: integer;
+begin
+  for i := 0 to Parent.ControlCount - 1 do
+  begin
+    if Parent.Controls[i] is TWinControl then
+    begin
+      AHooks.Add(TWndProcHook.Create(TWinControl(Parent.Controls[i]), self));
+      HookAllControls(TWinControl(Parent.Controls[i]), AHooks);
+    end;
+  end;
+end;
+
+procedure TWndProcHook.NewWndProc(var Msg: TLMessage);
+begin
+  if FWin32Menu.fEnabled then
+    if Msg.msg = WM_CONTEXTMENU then
+    begin
+      if (FControl is TWinControl) then
+        if TWinControl(FControl).PopupMenu <> nil then
+        begin
+          FWin32Menu.WinPopupMenu.CreateMenu(TWinControl(FControl).PopupMenu);
+          exit;
+        end;
+    end;
+
+  if Assigned(FOldProc) then FOldProc(Msg);
+end;
+{$EndIf}
+
+constructor TSGJWin32Menu.Create(AOwner: TComponent);
+begin
+  inherited;
+  {$IfDef MSWindows}
+  fOwner := TForm(AOwner);
+  MainMenuColorMenu := $002A2A2A;
+  MainMenuColorText := clWhite;
+  MainMenuColorBG := $002A2A2A;
+  MainMenuColorBGHot := $004D4D4D;
+  MainMenuColorBGSelected := $004D4D4D;
+  MainMenuColorBorder := $004D4D4D;
+  MainMenuColorTextDisabled := ClGray;
+  {$ENDIF}
+end;
+
+destructor TSGJWin32Menu.Destroy;
+var
+  i: integer;
+begin
+  {$IfDef MSWindows}
+  if not (csDesigning in ComponentState) then
+  begin
+    SetWindowLongPtr(fOwner.Handle, GWLP_WNDPROC, PtrUInt(PrevWndProc));
+    for i := 0 to Hooks.Count - 1 do
+      TObject(Hooks[i]).Free;
+    Hooks.Free;
+    Win32Menu.Free;
+    WinPopupMenu.Free;
+  end;
+  {$ENDIF}
+
+  inherited Destroy;
+end;
+
+procedure TSGJWin32Menu.Loaded;
+begin
+  inherited Loaded;
+  {$IfDef MSWindows}
+  if csDesigning in ComponentState then Exit;
+  begin
+    SetWindowLongPtr(fOwner.Handle, GWLP_USERDATA, PtrInt(Self));
+    Win32Menu := TSGJNativeWin32Menu.Create(fOwner);
+    WinPopupMenu := TSGJNativeWin32Menu.Create(fOwner);
+    if fOwner.Menu <> nil then
+      Win32Menu.CreateMenu(fOwner.Menu);
+
+    Hooks := TList.Create;
+    HookAllControls(fOwner, Hooks);
+    PrevWndProc := Windows.WNDPROC(SetWindowLongPtr(fOwner.Handle,
+      GWL_WNDPROC, PtrUInt(@WndCallback)));
+
+    Win32Menu.CustomColors := MainMenuCustomColors;
+    Win32Menu.ColorMenu := MainMenuColorMenu;
+    Win32Menu.ColorText := MainMenuColorText;
+    Win32Menu.ColorBG := MainMenuColorBG;
+    Win32Menu.ColorBGHot := MainMenuColorBGHot;
+    Win32Menu.ColorBGSelected := MainMenuColorBGSelected;
+    Win32Menu.ColorBorder := MainMenuColorBorder;
+    Win32Menu.ColorTextDisabled := MainMenuColorTextDisabled;
+    if not fEnabled then SetEnabled(false);
+   end;
+  {$ENDIF}
+end;
+
+procedure TSGJWin32Menu.SetEnabled(AValue: boolean);
+var
+  i: integer;
+begin
+  fEnabled := AValue;
+
   {$IFDEF MSWINDOWS}
-  SetWindowLongPtr(fhandle, GWLP_WNDPROC, PtrUInt(PrevWndProc));
-  {$EndIf}
+  if fEnabled = false then
+      if fOwner.Menu <> nil then
+      begin
+        fFormMainMenu := fOwner.Menu;
+        fOwner.Menu := nil;
+        fOwner.Menu := fFormMainMenu;
+      end;
+
+   if fEnabled then
+      if fOwner.Menu <> nil then
+        Win32Menu.CreateMenu(fOwner.Menu);
+   {$ENDIF}
+end;
+
+{$IFDEF MSWINDOWS}
+destructor TSGJNativeWin32Menu.Destroy;
+begin
   inherited;
 end;
 
-constructor TSGJWin32Menu.Create(AForm: TForm;AEnableWndCall: boolean);
+constructor TSGJNativeWin32Menu.Create(AForm: TForm);
 begin
   fForm := AForm;
   fHandle := AForm.Handle;
-  {$IFDEF MSWINDOWS}
-  if AEnableWndCall then
-  PrevWndProc := Windows.WNDPROC(SetWindowLongPtr(fHandle, GWL_WNDPROC,
-    PtrUInt(@WndCallback)));
-  {$EndIf}
-  CustomColors := False;
-  ColorMenu := $002A2A2A;
-  ColorText := clWhite;
-  ColorBG := $002A2A2A;
-  ColorBGHot := $004D4D4D;
-  ColorBGSelected := $004D4D4D;
-  ColorBorder := $004D4D4D;
-  ColorTextDisabled := ClGray;
 end;
-{$IFDEF MSWINDOWS}
+
 function CreatePopup(AMenuItem: TMenuItem; APopup: TMenu): HMenu;
 var
   popupMenu: HMenu;
@@ -343,20 +547,17 @@ begin
 
   Result := popupMenu;
 end;
-{$EndIf}
-procedure TSGJWin32Menu.CreateMenu(APopup: TMenu);
+
+procedure TSGJNativeWin32Menu.CreateMenu(APopup: TMenu);
 var
   pt: TPoint;
   //MII: TMenuItemInfo;
   Bmp: TBitmap;
   i: integer;
-  {$IFDEF MSWINDOWS}
   popupMenu: HMenu;
-  {$EndIf}
   Shortcut: string;
 begin
   fPopupMenu := APopup;
-  {$IFDEF MSWINDOWS}
   if APopup is TMainMenu then
     popupMenu := Windows.CreateMenu()
   else
@@ -428,10 +629,10 @@ begin
     DestroyMenu(popupMenu);
 
   end;
-  {$ELSE}
-   if APopup is TPopupMenu then
-      TPopupMenu(APopup).PopUp;
-  {$ENDIF}
-end;
 
+  { if APopup is TPopupMenu then
+      TPopupMenu(APopup).PopUp;}
+
+end;
+{$ENDIF}
 end.
