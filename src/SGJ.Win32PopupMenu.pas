@@ -25,8 +25,11 @@ uses
   {$IFDEF MSWINDOWS}
   Windows, uxTheme,
   {$EndIf}
-  SysUtils, Menus, Graphics, Forms, Controls, Dialogs, LCLProc,
-  types, Classes, LMessages;
+  {$IFDEF FPC}
+  LResources,LCLProc, LMessages,
+  {$ENDIF}
+  SysUtils, Menus, Graphics, Forms, Controls, Dialogs,
+  types, Classes;
 
 
   {$IFDEF MSWINDOWS}
@@ -634,5 +637,9 @@ begin
       TPopupMenu(APopup).PopUp;}
 
 end;
+{$ENDIF}
+{$IFDEF FPC}
+initialization
+  {$I resources/SGJ.Win32Menu.lrs}
 {$ENDIF}
 end.
