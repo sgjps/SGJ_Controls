@@ -21,4 +21,4 @@ TSGJListView - ListView for Lazarus with Tile and Groups support on Windows. Com
 TWin32Menu - Component for Lazarus. Replaces TMainMenu and TPopupMenu with native Windows Menus. 
 
 
-Homepage: https://www.hiperapps.com/en/ctrls/SGJ_Controls_for_Lazarus_and_Delphi
+Homepage: [SGJ Controls for Lazarus and Delphi](https://www.hiperapps.com/en/ctrls/SGJ_Controls_for_Lazarus_and_Delphi)
