@@ -67,6 +67,7 @@
       </Item>
       <Item>
         <Filename Value="..\src\SGJ.Win32PopupMenu.pas"/>
+        <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.Win32PopupMenu"/>
       </Item>
     </Files>

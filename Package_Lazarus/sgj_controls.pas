@@ -23,6 +23,7 @@ begin
   RegisterUnit('SGJ.Panel', @SGJ.Panel.Register);
   RegisterUnit('SGJ.ListView', @SGJ.ListView.Register);
   RegisterUnit('SGJ.ShellTreeView', @SGJ.ShellTreeView.Register);
+  RegisterUnit('SGJ.Win32PopupMenu', @SGJ.Win32PopupMenu.Register);
 end;
 
 initialization
