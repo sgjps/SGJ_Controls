@@ -551,8 +551,8 @@ begin
   CreateOsDirsNode(RS_SGJShellTreeView_Documents, 'XDG_DOCUMENTS_DIR');
   CreateOsDirsNode(RS_SGJShellTreeView_Download, 'XDG_DOWNLOAD_DIR');
   CreateOsDirsNode(RS_SGJShellTreeView_Pictures, 'XDG_PICTURES_DIR');
-  CreateOsDirsNode(RS_SGJShellTreeView_Pictures, 'XDG_MUSIC_DIR');
-  CreateOsDirsNode(RS_SGJShellTreeView_Pictures, 'XDG_VIDEOS_DIR');
+  CreateOsDirsNode(RS_SGJShellTreeView_Music, 'XDG_MUSIC_DIR');
+  CreateOsDirsNode(RS_SGJShellTreeView_Videos, 'XDG_VIDEOS_DIR'); 
   // XDG_TEMPLATES_DIR, XDG_PUBLICSHARE_DIR,
   {$ENDIF}
 
@@ -573,4 +573,5 @@ initialization
   {$I resources/SGJ.ShellTreeView.lrs}
 {$ENDIF}
 end.
+
 
