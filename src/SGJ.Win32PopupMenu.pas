@@ -248,7 +248,7 @@ begin
 
       FillChar(R, SizeOf(R), 0);
       mbi.cbSize := SizeOf(mbi);
-      GetMenuBarInfo(ahWnd, -3, 0, @mbi);
+      GetMenuBarInfo(ahWnd, OBJID_MENU, 0, @mbi);
 
       GetWindowRect(ahWnd, rcWindow);
 
@@ -258,14 +258,12 @@ begin
       _Brush := CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorMenu));
       FillRect(pUDM^._hdc, R, _Brush);
 
-
       Exit;
     end;
 
     if uMsg = WM_UAHDRAWMENUITEM then
     begin
       pUDMI := PUAHDRAWMENUITEM(lParam);
-
 
       g_brItemBackground := CreateSolidBrush(ColorToRGB(W32Menu.Win32Menu.ColorBG));
       g_brItemBackgroundHot :=
@@ -299,7 +297,6 @@ begin
       end
       else
       begin
-
         if ((pUDMI^.dis.itemState and ODS_INACTIVE) <> 0) or
           ((pUDMI^.dis.itemState and ODS_DEFAULT) <> 0) then
         begin
@@ -325,9 +322,7 @@ begin
 
         if (pUDMI^.dis.itemState and ODS_NOACCEL) <> 0 then
           dwFlags := dwFlags or DT_HIDEPREFIX;
-
       end;
-
 
       menuTheme := OpenThemeData(ahWnd, 'Menu');
 
@@ -359,7 +354,6 @@ constructor TWndProcHook.Create(AControl: TWinControl; AW32Menu: TSGJWin32Menu);
 begin
   inherited Create;
   FControl := AControl;
-
   FOldProc := AControl.WindowProc;
   AControl.WindowProc := @NewWndProc;
   FWin32Menu := AW32Menu;
@@ -468,6 +462,7 @@ begin
   fEnabled := AValue;
 
   {$IFDEF MSWINDOWS}
+  if csDesigning in ComponentState then Exit;
   if fEnabled = false then
       if fOwner.Menu <> nil then
       begin
@@ -554,7 +549,6 @@ end;
 procedure TSGJNativeWin32Menu.CreateMenu(APopup: TMenu);
 var
   pt: TPoint;
-  //MII: TMenuItemInfo;
   Bmp: TBitmap;
   i: integer;
   popupMenu: HMenu;
@@ -630,12 +624,7 @@ begin
       nil
       );
     DestroyMenu(popupMenu);
-
   end;
-
-  { if APopup is TPopupMenu then
-      TPopupMenu(APopup).PopUp;}
-
 end;
 {$ENDIF}
 {$IFDEF FPC}
