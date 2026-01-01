@@ -31,4 +31,4 @@ If you appreciate this project, you can support my work:
 
 [Donate](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
 
-Polish :: [Postaw Kawę](https://suppi.pl/sgj)
+[Postaw Kawę](https://suppi.pl/sgj)
