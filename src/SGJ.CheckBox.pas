@@ -3,7 +3,7 @@
 // home page : https://www.hiperapps.com
 // email     : sgj@sgjps.com
 //
-// date      : 2025/12.03
+// date      : 2025/12/03
 // version   : 1.0
 //
 //
@@ -219,6 +219,9 @@ procedure TSGJCheckbox.KeyDown(var Key: word; Shift: TShiftState);
 begin
   if Enabled then
   begin
+  if (Checked = True) and ((VisualOptions.CheckBoxStyle=RadioButton) or
+                           (VisualOptions.CheckBoxStyle=ToogleRadioButton))
+                           then exit;
     if Key = 32 then
       if Checked = True then Checked := False
       else
@@ -232,6 +235,9 @@ procedure TSGJCheckbox.Click;
 begin
   if Enabled then
   begin
+    if (Checked = True) and ((VisualOptions.CheckBoxStyle=RadioButton) or
+                             (VisualOptions.CheckBoxStyle=ToogleRadioButton))
+                             then exit;
     if Checked = True then Checked := False
     else
       Checked := True;
@@ -340,7 +346,7 @@ begin
   image := TBGRABitmap.Create(Width, Height,
     ColorToBGRA(ColorToRGB(Parent.Brush.Color)));
 
-  image.FontAntialias := True;
+  image.FontAntialias := true;
   image.FontStyle := Font.Style;
   image.FontHeight := abs(GetFontData(Font.Reference.Handle).Height);
   c := ColorToRGB(FVisualOpt.ColorOuter);
