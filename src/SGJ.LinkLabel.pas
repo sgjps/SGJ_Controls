@@ -35,9 +35,7 @@ type
 
   public
       constructor Create(AOwner: TComponent); override;
-      //procedure AdjustClientRect(var aRect: TRect); override;
       procedure MouseMove(Shift:TShiftState; X,Y:Integer); override;
-      //procedure MouseLeave; override;
       procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
       procedure Click; override;
   published
@@ -70,16 +68,14 @@ end;
 
 procedure TSGJLinkLabel.MouseMove(Shift:TShiftState; X,Y:Integer);
 begin
-  inherited; // call the inherited Click method.
-  // Do something new.
+  inherited;
   Self.Font.Color:=ColorHover;
   self.Cursor:=crHandPoint;
 end;
 
 procedure TSGJLinkLabel.MouseLeave(var Msg: TMessage);
 begin
-  inherited; // call the inherited Click method.
-  // Do something new.
+  inherited;
   Self.Font.Color:=ColorNormal;
   self.Cursor:=crDefault;
 end;
