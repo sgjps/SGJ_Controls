@@ -25,5 +25,5 @@ Homepage: [SGJ Controls for Lazarus and Delphi](https://www.hiperapps.com/en/ctr
 
 # Donate 
 
-[Donate](paypal.me/grzegorzskulimowski)
+[Donate](https://paypal.me/grzegorzskulimowski)
 [Donate](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
