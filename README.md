@@ -29,6 +29,6 @@ If you appreciate this project, you can support my work:
 
 [![Donate](/Images/donate_paypal.svg)](https://paypal.me/grzegorzskulimowski)
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue)](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
+[![Donate](/Images/donate_paypal.svg)](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
 
-[![Postaw Kawę](https://img.shields.io/badge/Postaw_kaw%C4%99-Suppi-blue)](https://suppi.pl/sgj)
+[![Postaw Kawę](/Images/kawa_suppi.svg)](https://suppi.pl/sgj)
