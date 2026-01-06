@@ -27,7 +27,7 @@ Homepage: [SGJ Controls for Lazarus and Delphi](https://www.hiperapps.com/en/ctr
 
 If you appreciate this project, you can support my work:
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue)](https://paypal.me/grzegorzskulimowski)
+[![Donate](/Images/donate_paypal.svg)](https://paypal.me/grzegorzskulimowski)
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue)](https://www.paypal.com/donate/?hosted_button_id=N36UEFE5LZXYS)
 
