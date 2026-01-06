@@ -56,6 +56,7 @@ type
     Win32Menu: TSGJNativeWin32Menu;
     WinPopupMenu: TSGJNativeWin32Menu;
     procedure HookAllControls(Parent: TWinControl; AHooks: TList);
+    procedure UnhookAllControls(AHooks: TList);
     {$EndIF}
     procedure SetEnabled(AValue: boolean);
   protected
@@ -158,6 +159,7 @@ type
     procedure NewWndProc(var Msg: TLMessage);
   public
     constructor Create(AControl: TWinControl; AW32Menu: TSGJWin32Menu);
+    destructor Destroy; override;
   end;
 
   var
@@ -355,10 +357,15 @@ begin
   inherited Create;
   FControl := AControl;
   FOldProc := AControl.WindowProc;
-  AControl.WindowProc := @NewWndProc;
+  AControl.WindowProc := @Self.NewWndProc;
   FWin32Menu := AW32Menu;
 end;
-
+destructor TWndProcHook.Destroy;
+begin
+  if Assigned(FControl) then
+  FControl.WindowProc := FOldProc; // restore original
+  inherited Destroy;
+end;
 
 procedure TSGJWin32Menu.HookAllControls(Parent: TWinControl; AHooks: TList);
 var
@@ -376,7 +383,7 @@ end;
 
 procedure TWndProcHook.NewWndProc(var Msg: TLMessage);
 begin
-  if FWin32Menu.fEnabled then
+if FWin32Menu.fEnabled then
     if Msg.msg = WM_CONTEXTMENU then
     begin
       if (FControl is TWinControl) then
@@ -406,6 +413,14 @@ begin
   {$ENDIF}
 end;
 
+procedure TSGJWin32Menu.UnhookAllControls(AHooks: TList);
+var i: Integer;
+begin
+  for i := 0 to AHooks.Count - 1 do
+  TObject(AHooks[i]).Free;
+  AHooks.Clear;
+end;
+
 destructor TSGJWin32Menu.Destroy;
 var
   i: integer;
@@ -413,10 +428,9 @@ begin
   {$IfDef MSWindows}
   if not (csDesigning in ComponentState) then
   begin
-    SetWindowLongPtr(fOwner.Handle, GWLP_WNDPROC, PtrUInt(PrevWndProc));
-    for i := 0 to Hooks.Count - 1 do
-      TObject(Hooks[i]).Free;
+    UnhookAllControls(Hooks);
     Hooks.Free;
+    SetWindowLongPtr(fOwner.Handle, GWLP_WNDPROC, PtrUInt(PrevWndProc));
     Win32Menu.Free;
     WinPopupMenu.Free;
   end;
@@ -439,6 +453,8 @@ begin
 
     Hooks := TList.Create;
     HookAllControls(fOwner, Hooks);
+
+
     PrevWndProc := Windows.WNDPROC(SetWindowLongPtr(fOwner.Handle,
       GWL_WNDPROC, PtrUInt(@WndCallback)));
 
