@@ -1,4 +1,4 @@
-[![Lazarus and Delphi](/Images/lazdelphi.svg)] [![License](/Images/license.svg)]
+![Lazarus and Delphi](/Images/lazdelphi.svg) ![License](/Images/license.svg)
 # SGJ_Controls
 Visual Controls for Delphi and Lazarus
 
