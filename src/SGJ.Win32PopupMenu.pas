@@ -217,7 +217,8 @@ begin
   W32Menu := TSGJWin32Menu(GetWindowLongPtr(AhWnd, GWLP_USERDATA));
   if uMsg = WM_CONTEXTMENU then
      if W32Menu.Enabled then
-     W32Menu.WinPopupMenu.CreateMenu(TForm(W32Menu.fOwner).PopupMenu);
+       if TForm(W32Menu.fOwner).PopupMenu<>nil then
+       W32Menu.WinPopupMenu.CreateMenu(TForm(W32Menu.fOwner).PopupMenu);
   if uMsg = WM_COMMAND then     ;
   begin
     if (lParam = 0) and (HIWORD(wParam) = 0) then
@@ -383,6 +384,7 @@ end;
 
 procedure TWndProcHook.NewWndProc(var Msg: TLMessage);
 begin
+
 if FWin32Menu.fEnabled then
     if Msg.msg = WM_CONTEXTMENU then
     begin
