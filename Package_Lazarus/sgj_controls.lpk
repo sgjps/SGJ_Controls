@@ -9,7 +9,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\src"/>
+        <OtherUnitFiles Value="..\src;D:\FPCUPdeluxe44\SGJ_Controls\"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <CodeGeneration>
@@ -23,7 +23,7 @@
         </Debugging>
       </Linking>
     </CompilerOptions>
-    <Version Major="2" Release="2512"/>
+    <Version Major="2" Release="2602"/>
     <Files>
       <Item>
         <Filename Value="..\src\SGJ.LinkLabel.pas"/>
@@ -52,14 +52,14 @@
         <UnitName Value="SGJ.Panel"/>
       </Item>
       <Item>
-        <Filename Value="..\src\SGJ.ListView.pas"/>
-        <HasRegisterProc Value="True"/>
-        <UnitName Value="SGJ.ListView"/>
-      </Item>
-      <Item>
         <Filename Value="..\src\SGJ.ShellTreeView.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.ShellTreeView"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ListView.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ListView"/>
       </Item>
       <Item>
         <Filename Value="..\src\SGJListViewPropEdit.pp"/>
@@ -69,6 +69,26 @@
         <Filename Value="..\src\SGJ.Win32PopupMenu.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.Win32PopupMenu"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.Win32Extension.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.Win32Extension"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\sgj.titlebarctrls.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.TitleBarCtrls"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.CalendarView.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.CalendarView"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ExpandPanel.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ExpandPanel"/>
       </Item>
     </Files>
     <RequiredPkgs>
