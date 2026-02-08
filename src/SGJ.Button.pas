@@ -32,6 +32,10 @@ type
   TSGJTextAlignment = (taCenter, taLeftCenter);
   TSGJImagePosition = (ipCenter, ipLeftCenter, ipTopCenter, ipBottomCenter);
 
+
+type
+  TButtonArrow = (baNone, baRight, baDown, baUp);
+
 type
   TSGJBtnState = class(TPersistent)
   private
@@ -79,6 +83,7 @@ type
     fDisabled: TSGJBtnState;
     fMouseMove: byte;
     fthemed: boolean;
+    fbuttonArrow: TButtonArrow;
     procedure SetSubcaption(AValue: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure PaintButton();
     procedure SetThemed(AValue: boolean);
@@ -86,6 +91,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     property Themed: boolean read fthemed write SetThemed;
+    property ButtonArrow: TButtonArrow read fButtonArrow write fButtonArrow;
     property CaptionLine2: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF} read fSubCaption write SetSubcaption;
     property ButtonNormal: TSGJBtnState read fNormal write fnormal;
     property ButtonHover: TSGJBtnState read fHover write fHover;
@@ -107,6 +113,7 @@ type
 type
   TSGJButton = class(TCustomSGJButton)
   published
+    property ButtonArrow;
     property ButtonNormal;
     property ButtonHover;
     property ButtonClicked;
@@ -380,6 +387,7 @@ begin
     PaintButton();
 end;
 
+
 procedure TCustomSGJButton.PaintButton();
 var
   image: TBGRABitmap;
@@ -392,6 +400,9 @@ var
   ImgRes, SubMargin,
   ImgWidth,ImgHeight:integer;
   CaptionHeight:integer;
+  AStyle: TTextStyle;
+  BtnSym: string;
+  R:TRect;
 begin
   case fMouseMove of
     0: ButtonState := ButtonNormal;
@@ -401,10 +412,11 @@ begin
   if not self.Enabled then ButtonState := ButtonDisabled;
 
   Canvas.Font := ButtonState.Font;
+  Canvas.Font.Size:=ScaleX(ButtonState.Font.Size,96);
   Canvas.Brush.Color := ButtonState.Color;
   BtnColor := ButtonState.Color;
   SubFont := ButtonState.FontSubCaption;
-  CaptionHeight:=Canvas.TextHeight(Caption);
+  CaptionHeight:=Canvas.TextHeight('Ag');
   {$Region 'Themed Button'}
   if fThemed then
   begin
@@ -479,11 +491,12 @@ begin
           begin
             ThemeServices.DrawText(self.canvas, Details, Caption,
               Rect(ImgWidth + (2*SubMargin),
-              (Height div 2) - (Canvas.TextHeight(Caption)) - 1,
+              (Height div 2) - (Canvas.TextHeight('Ag')) - 1,
               Canvas.TextWidth(Caption) + ImgWidth + (2*SubMargin),
               self.Height), 0, 0);
 
             Canvas.Font := ButtonState.FontSubCaption;
+            Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
             if Canvas.TextWidth(fSubCaption) < (Width -
               (ImgWidth + (3*SubMargin))) then
               ThemeServices.DrawText(self.canvas, Details, fSubCaption,
@@ -503,13 +516,14 @@ begin
         else
         if fSubCaption = '' then
           Canvas.TextOut(ImgWidth +(2*SubMargin),
-          (Height div 2) - (Canvas.TextHeight(Caption) div 2), Caption)
+          (Height div 2) - (Canvas.TextHeight('Ag') div 2), Caption)
         else
         begin
           Canvas.TextOut(ImgWidth +
-            (2*SubMargin), (Height div 2) - (Canvas.TextHeight(Caption)) - 1, Caption);
+            (2*SubMargin), (Height div 2) - (Canvas.TextHeight('Ag')) - 1, Caption);
 
           Canvas.Font := ButtonState.FontSubCaption;
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
           if Canvas.TextWidth(fSubCaption) < (Width -(ImgWidth + (3*SubMargin))) then
             Canvas.TextOut(ImgWidth +(2*SubMargin), (Height div 2) + 1, fSubCaption)
           else
@@ -547,6 +561,7 @@ begin
                       self.Height), DT_CENTER or DT_SINGLELINE, 0);
 
                     Canvas.Font := ButtonState.FontSubCaption;
+                    Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
                     if Canvas.TextWidth(fSubCaption) < (Width - SubMargin) then
                       ThemeServices.DrawText(self.canvas, Details, fSubCaption,
                         RECT(0,
@@ -573,6 +588,7 @@ begin
                   (ImgHeight + SubMargin), Caption);
 
                   Canvas.Font := ButtonState.FontSubCaption;
+                  Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
                   if Canvas.TextWidth(fSubCaption) < (Width -(SubMargin)) then
                     Canvas.TextOut((Width div 2)-(Canvas.TextWidth(fSubCaption) div 2),
                     (ImgHeight + (2*SubMargin)+CaptionHeight), fSubCaption)
@@ -657,7 +673,7 @@ begin
       case ButtonState.TextAlignment of
         taCenter: begin
           ThemeServices.DrawText(self.canvas, Details, Caption,
-            Rect(0,(Height div 2) - (Canvas.TextHeight(Caption)) -1,width, Height),
+            Rect(0,(Height div 2) - (Canvas.TextHeight('Ag')) -1,width, Height),
                            DT_CENTER or DT_SINGLELINE, 0);
           Canvas.Font := ButtonState.FontSubCaption;
           ThemeServices.DrawText(self.canvas, Details, fSubCaption,
@@ -666,7 +682,7 @@ begin
                    end;
         taLeftCenter: begin
               ThemeServices.DrawText(self.canvas, Details, Caption,
-              Rect(SubMargin, (Height div 2) - (Canvas.TextHeight(Caption)) -
+              Rect(SubMargin, (Height div 2) - (Canvas.TextHeight('Ag')) -
         1, Width, Height), 0, 0);
       Canvas.Font := ButtonState.FontSubCaption;
       ThemeServices.DrawText(self.canvas, Details, fSubCaption,
@@ -680,9 +696,9 @@ begin
   begin
     case ButtonState.TextAlignment of
       taCenter: Canvas.TextOut(Width div 2 - Canvas.TextWidth(Caption) div
-          2, (Height div 2) - (Canvas.TextHeight(Caption) div 2), Caption);
+          2, (Height div 2) - (Canvas.TextHeight('Ag') div 2), Caption);
       taLeftCenter: Canvas.TextOut(SubMargin, (Height div 2) -
-          (Canvas.TextHeight(Caption) div 2), Caption);
+          (Canvas.TextHeight('Ag') div 2), Caption);
     end;
   end
   else
@@ -690,7 +706,7 @@ begin
     case ButtonState.TextAlignment of
          taLeftCenter: begin
            Canvas.TextOut(SubMargin,
-                         (Height div 2) - (Canvas.TextHeight(Caption)) - 1, Caption);
+                         (Height div 2) - (Canvas.TextHeight('Ag')) - 1, Caption);
            Canvas.Font := ButtonState.FontSubCaption;
            Canvas.TextOut(SubMargin, (Height div 2) + 1, fSubCaption);
                    end;
@@ -704,6 +720,40 @@ begin
     end;
   end;
   {$EndREGION Caption Without Images}
+
+  if fButtonArrow<>baNone then
+  begin
+      AStyle := Canvas.TextStyle;
+      AStyle.Alignment := TAlignment.taRightJustify;
+      AStyle.Layout := tlCenter;
+      AStyle.ShowPrefix := True;
+
+      {$ifdef msWindows}
+      if Win32MajorVersion=10 then
+      begin
+      if Win32BuildNumber>=2200 then
+      Canvas.Font.Name := 'Segoe Fluent Icons'
+      else
+      Canvas.Font.Name := 'Segoe MDL2 Assets';
+      Case fButtonArrow of
+          baRight: BtnSym := WideChar($E970);
+          baDown: BtnSym := WideChar($E96E);
+          baUp: BtnSym := WideChar($E96D);
+      end;
+      end
+      else
+      {$Endif}
+      Case fButtonArrow of
+          baRight: BtnSym := '>';
+          baDown: BtnSym := '˅';
+          baUp: BtnSym := '˄';
+      end;
+
+      R:=self.ClientRect;
+      R.Width:=R.Width-5;
+      Canvas.Font.Color:=ButtonState.fFont.Color;
+      Canvas.TextRect(R, 0, 0, BtnSym, AStyle);
+  end;
 end;
 {$IFDEF FPC}
 initialization
