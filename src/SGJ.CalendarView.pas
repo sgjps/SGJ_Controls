@@ -172,8 +172,6 @@ begin
   Width := 300;
   Height := 400;
 
-  Font.Size := 14;
-
   FS := DefaultFormatSettings;
   FS.DateSeparator := '/';
   FS.ShortDateFormat := 'yyyy/mm/dd';
@@ -264,8 +262,11 @@ begin
   fCalendar.Loaded;
 
   fDown.Font.Color := FontColor;
+  fDown.Font.Size:=14;
   fUp.Font.Color := FontColor;
+  fUp.Font.Size := 14;
   fBtnLeft.Font.Color := FontColor;
+  fBtnLeft.Font.Size:=14;
 end;
 
 procedure TSGJCalendarView.PaintBtnText(Sender: TObject);
@@ -732,7 +733,7 @@ begin
 
   //Set Font
   if (arow > 0) or (fViewStyle <> cvsDays) then
-    Canvas.Font.Size := ScaleX(14, 96)
+    Canvas.Font.Size := 14
   else
     Canvas.Font.Size := 0;
   //Draw Text
