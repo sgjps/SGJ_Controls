@@ -17,6 +17,7 @@ unit SGJ.CalendarView;
 interface
 
 uses
+  {$IFDEF LCLGTK2} Gtk2, Gtk2Def, {$ENDIF}
   LCLType, LCLIntf, LResources, Classes, Buttons, SysUtils, Grids, Controls,
   DateUtils, StdCtrls, ExtCtrls, Dialogs,
   Graphics;
@@ -31,8 +32,8 @@ type
     fViewStyle: TSGJCalendarViewStyle;
     fDayNow: integer;
     fDaySelected: integer;
-    fComparedDate:boolean;
-    fComparedSDate:boolean;
+    fComparedDate: boolean;
+    fComparedSDate: boolean;
     procedure Init;
   protected
     procedure Loaded; override;
@@ -47,7 +48,7 @@ type
     FDrawFocus: boolean;
     DaysNotInMonth: TColor;
     TodayColor: TColor;
-    DayFromDate:TColor;
+    DayFromDate: TColor;
     DateTime: TDateTime;
     FS: TFormatSettings;
     FirstDayOfWeek: TSGJCalendarFirstDayOfWeek;
@@ -77,7 +78,7 @@ type
     fCalendarColor: TColor;
     fCalendarOtherdays: TColor;
     fCurrentDay: TColor;
-    fSelectedDay:TColor;
+    fSelectedDay: TColor;
     fFontColor: TColor;
     fFontButtonHoverColor: TColor;
     fButtonsHoverColor: TColor;
@@ -86,14 +87,13 @@ type
     fFirstDayOfWeek: TSGJCalendarFirstDayOfWeek;
     FS: TFormatSettings;
     procedure PaintBtn(Sender: TObject);
-    procedure BtnMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
+    procedure BtnMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
     procedure BtnMouseLeave(Sender: TObject);
     procedure BtnMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: integer);
     procedure PaintBtnText(Sender: TObject);
     procedure SetDate(AValue: TDateTime);
-    procedure Init(ADate:TDateTime);
+    procedure Init(ADate: TDateTime);
   public
     constructor Create(Aowner: TComponent); override;
     procedure SetHeader(AValue: string);
@@ -129,12 +129,37 @@ begin
   RegisterComponents('SGJ', [TSGJCalendarView]);
 end;
 
+procedure DrawArrowUp(C: TCanvas; X, Y, Size: integer);
+begin
+  C.Pen.Width := 2;
+  // Left stroke
+  C.MoveTo(X - Size, Y + Size);
+  C.LineTo(X, Y - Size);
+
+  // Right stroke
+  C.MoveTo(X + Size, Y + Size);
+  C.LineTo(X, Y - Size);
+end;
+
+
+procedure DrawArrowDown(C: TCanvas; X, Y, Size: integer);
+begin
+  C.Pen.Width := 2;
+  // Left stroke
+  C.MoveTo(X - Size, Y - Size);
+  C.LineTo(X, Y + Size);
+
+  // Right stroke
+  C.MoveTo(X + Size, Y - Size);
+  C.LineTo(X, Y + Size);
+end;
+
 procedure TSGJCalendarView.SetHeader(AValue: string);
 begin
   fbtnLeft.Caption := AValue;
 end;
 
-procedure TSGJCalendarView.Init(ADate:TDateTime);
+procedure TSGJCalendarView.Init(ADate: TDateTime);
 var
   s: string;
 begin
@@ -153,7 +178,7 @@ begin
     if HandleAllocated then
     begin
       DecodeDate(fDate, fCalendar.Year, fCalendar.Month, fCalendar.Day);
-      fCalendar.DateTime:=fdate;
+      fCalendar.DateTime := fdate;
 
       init(fDate);
 
@@ -184,19 +209,22 @@ begin
 
   Date := DateOf(Now);
 
+  //Header
   fHeader := TCustomControl.Create(self);
   fHeader.Parent := self;
   FHeader.Align := alTop;
   FHeader.AutoSize := True;
 
-
+  //Internal grid - Calendar
   fCalendar := TSGJCalendarV.Create(self);
+  fCalendar.ScrollBars := ssNone;
   fCalendar.Parent := self;
   fCalendar.Align := alClient;
   fCalendar.DateTime := date;
   fCalendar.FirstDayOfWeek := FirstDayOfWeek;
   fCalendar.FS := FS;
 
+  //Button Header Left - Month/Year
   fBtnLeft := TSpeedButton.Create(fHeader);
   fBtnLeft.Parent := fHeader;
   fBtnLeft.Align := alLeft;
@@ -209,12 +237,13 @@ begin
   fBtnLeft.OnMouseMove := @BtnMouseMove;
   fBtnLeft.OnMouseLeave := @BtnMouseLeave;
   fBtnLeft.OnMouseDown := @BtnMouseDown;
-
+  //Button UP
   fUp := TSpeedButton.Create(fHeader);
   fUp.Parent := fHeader;
   fUp.Align := alRight;
   fUp.Caption := '˄';
   fUp.Constraints.MaxHeight := ScaleX(45, 96);
+  fUp.Constraints.MinWidth := 24;
   fUp.AutoSize := True;
   fUp.BorderSpacing.Around := 5;
   fUp.Flat := True;
@@ -223,12 +252,13 @@ begin
   fUp.OnMouseMove := @BtnMouseMove;
   fUp.OnMouseLeave := @BtnMouseLeave;
   fUp.OnMouseDown := @BtnMouseDown;
-
+  //Button Down
   fDown := TSpeedButton.Create(fHeader);
   fDown.Parent := fHeader;
   fDown.Align := alRight;
   fDown.Caption := '˅';
   fDown.Constraints.MaxHeight := ScaleX(45, 96);
+  fDown.Constraints.MinWidth := 24;
   fDown.AutoSize := True;
   fDown.BorderSpacing.Around := 5;
   fDown.Flat := True;
@@ -242,7 +272,8 @@ begin
 end;
 
 procedure TSGJCalendarView.Loaded;
-
+var
+  Widget: Pointer;
 begin
   inherited Loaded;
   Init(Now);
@@ -254,7 +285,7 @@ begin
     fCalendar.GridLineStyle := psSolid;
   fCalendar.DaysNotInMonth := DaysNotInMonth;
   fCalendar.TodayColor := TodayColor;
-  fCalendar.DayFromDate:=DayFromDate;
+  fCalendar.DayFromDate := DayFromDate;
   fCalendar.Color := Color;
   fCalendar.Font.Color := FontColor;
   fCalendar.FirstDayOfWeek := FirstDayOfWeek;
@@ -262,11 +293,18 @@ begin
   fCalendar.Loaded;
 
   fDown.Font.Color := FontColor;
-  fDown.Font.Size:=14;
+  fDown.Font.Size := 14;
   fUp.Font.Color := FontColor;
   fUp.Font.Size := 14;
   fBtnLeft.Font.Color := FontColor;
-  fBtnLeft.Font.Size:=14;
+  fBtnLeft.Font.Size := 14;
+
+  //Fix for GTK2 - Hide Scroll
+  Widget := Pointer(fCalendar.Handle);
+  {$IFDEF LCLGTK2}
+  gtk_scrolled_window_set_policy(PGtkScrolledWindow(Widget),
+                                   GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+  {$ENDIF}
 end;
 
 procedure TSGJCalendarView.PaintBtnText(Sender: TObject);
@@ -284,7 +322,7 @@ begin
     TSpeedButton(Sender).Canvas.TextRect(TSpeedButton(Sender).ClientRect,
       0, 0, TSpeedButton(Sender).Caption, AStyle);
   end;
-
+  //On Windows 8+ button arrows is painted from fonts
   if TSpeedButton(Sender).Tag > 0 then
   begin
     {$ifdef msWindows}
@@ -305,13 +343,25 @@ begin
       fUp.Caption := widechar($E098);
       fDown.Caption := widechar($E099);
     end;
-    {$Endif}
-    case TSpeedButton(Sender).Tag of
-      1: TSpeedButton(Sender).Canvas.TextRect(TSpeedButton(Sender).ClientRect,
-          0, 0, fUp.Caption, AStyle);
-      2: TSpeedButton(Sender).Canvas.TextRect(TSpeedButton(Sender).ClientRect,
-          0, 0, fDown.Caption, AStyle);
-    end;
+
+    if (Win32MajorVersion = 10) or ((Win32MajorVersion = 6) and
+      (Win32MinorVersion in [2, 3])) then
+    begin
+      case TSpeedButton(Sender).Tag of
+        1: TSpeedButton(Sender).Canvas.TextRect(TSpeedButton(Sender).ClientRect,
+            0, 0, fUp.Caption, AStyle);
+        2: TSpeedButton(Sender).Canvas.TextRect(TSpeedButton(Sender).ClientRect,
+            0, 0, fDown.Caption, AStyle);
+      end;
+    end
+    else
+    {$Endif}//Draw Arrow
+      case TSpeedButton(Sender).Tag of
+        1: DrawArrowUp(TSpeedButton(Sender).Canvas, TSpeedButton(Sender).Width div
+            2, TSpeedButton(Sender).Height div 2, ScaleX(6, 96));
+        2: DrawArrowDown(TSpeedButton(Sender).Canvas, TSpeedButton(Sender).Width div
+            2, TSpeedButton(Sender).Height div 2, ScaleX(6, 96));
+      end;
   end;
 end;
 
@@ -326,12 +376,14 @@ end;
 procedure TSGJCalendarView.BtnMouseLeave(Sender: TObject);
 begin
   TSpeedButton(Sender).Canvas.Font.Color := FontColor;
+  TSpeedButton(Sender).Canvas.Pen.Color := FontColor;
 end;
 
 procedure TSGJCalendarView.BtnMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 var
   s, sd: string;
+
   procedure SetDays;
   begin
     DateTimeToString(s, 'mmmm yyyy',
@@ -342,6 +394,7 @@ var
     fCalendar.DTa :=
       StrToDateTime(fCalendar.HeaderDate + '/' + IntToStr(DayOf(Now)), FS);
   end;
+
 begin
 
   case TSpeedButton(Sender).Tag of
@@ -403,11 +456,12 @@ begin
   fCalendar.FDrawFocus := False;
 end;
 
-procedure TSGJCalendarView.BtnMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
+procedure TSGJCalendarView.BtnMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: integer);
 begin
   TSpeedButton(Sender).Canvas.Font.Color := FontColorButtonHover;
   TSpeedButton(Sender).Canvas.Brush.Color := ButtonHoverColor;
+  TSpeedButton(Sender).Canvas.Pen.Color := FontColorButtonHover;
   TSpeedButton(Sender).Canvas.FillRect(TSpeedButton(Sender).ClientRect);
   PaintBtnText(Sender);
 end;
@@ -423,7 +477,6 @@ begin
   inherited Create(AOwner);
   FixedCols := 0;
   FixedRows := 0;
-  ScrollBars := ssNone;
   BorderStyle := bsNone;
   FocusRectVisible := False;
   Options := Options - [goRangeSelect, goRowSelect, goDrawFocusSelected];
@@ -442,12 +495,12 @@ begin
   Result := inherited SelectCell(ACol, ARow);
   FDrawFocus := True;
 end;
-
+//DblClick -> SetDate
 procedure TSGJCalendarV.DblClick;
 begin
- if fViewStyle = cvsDays then
+  if fViewStyle = cvsDays then
     TSGJCalendarView(Parent).Date :=
-          EncodeDate(Year, Month, StrToInt(Cells[col, row]));
+      EncodeDate(Year, Month, StrToInt(Cells[col, row]));
 end;
 
 procedure TSGJCalendarV.Click;
@@ -516,7 +569,7 @@ var
   C: integer = 4;
 begin
   inherited Resize;
-
+  //Resize column to fit  grid size
   if fViewStyle = cvsDays then C := 7;
 
   DefaultColWidth := (Width div C);
@@ -563,125 +616,101 @@ begin
   endupdate;
 end;
 
-procedure TSGJCalendarV.LoadMonthCalendar(AYear, AMonth: word);
+procedure TSGJCalendarV.LoadMonthCalendar(AYear, AMonth: Word);
 var
-  FirstDay, PrevMonthDate, NextMonthDate: TDateTime;
-  StartDayOfWeek, StartDay: integer;
-  TotalDays, PrevMonthDays: integer;
-  DayCounter: integer;
-  aRow, aCol: integer;
-  i: integer;
+  FirstDay: TDateTime;
+  StartOffset: Integer;
+  TotalDays, PrevMonthDays: Integer;
+  PrevMonthDate: TDateTime;
+  DayCounter: Integer;
+  r, c: Integer;
 begin
-  if HeaderDate = '' then DTA := now
+  //Set params
+  if HeaderDate = '' then DTA := now       //Today
   else
-   DTa := StrToDateTime(HeaderDate + '/' + IntToStr(DayOf(date)), FS);
+    DTa := StrToDateTime(HeaderDate + '/' + IntToStr(DayOf(date)), FS);
   fDayNow := DayOf(Now);
-  fComparedDate:=SameDate(DTa, Date);
-  if HeaderDate = '' then DTb := DateTime
+  fComparedDate := SameDate(DTa, Date);
+  if HeaderDate = '' then DTb := DateTime  //DateFromCalendar
   else
-  DTb := StrToDateTime(HeaderDate + '/' + IntToStr(DayOf(DateTime)), FS);
-  fDaySelected:= DayOf(DateTime);
-  fComparedSDate:=SameDate(DTb, DateTime);
+    DTb := StrToDateTime(HeaderDate + '/' + IntToStr(DayOf(DateTime)), FS);
+  fDaySelected := DayOf(DateTime);
+  fComparedSDate := SameDate(DTb, DateTime);
+  //
+  BeginUpdate;
 
-//  beginupdate;
-  // Configure grid
-  ColCount := 7;   // Header - Week Days
-  RowCount := 7;   // 6 Weeks + Header
+  ColCount := 7;
+  RowCount := 7;
 
+  // Clear grid (rows 1..6)
+  for r := 1 to 6 do
+    for c := 0 to 6 do
+      Cells[c, r] := '';
 
-  // Clear grid
-  for aRow := 1 to RowCount - 1 do
-    for aCol := 0 to ColCount - 1 do
-      Cells[aCol, aRow] := '';
-
-  // Headers
-  for i := 0 to 6 do
+  // Header row (weekday names)
+  for c := 0 to 6 do
   begin
-    if FirstDayOfWeek = dwSunday then
-      Cells[i, 0] := FormatSettings.ShortDayNames[i + 1];
     if FirstDayOfWeek = dwMonday then
     begin
-      Cells[i, 0] := FormatSettings.ShortDayNames[i + 2];
-      if i = 6 then Cells[i, 0] := FormatSettings.ShortDayNames[1];
+      Cells[c, 0] := FormatSettings.ShortDayNames[((c + 1) mod 7) + 1];
+    end
+    else
+    begin
+      Cells[c, 0] := FormatSettings.ShortDayNames[c + 1];
     end;
   end;
 
-  // First day of this month
+  // First day of the month
   FirstDay := EncodeDate(AYear, AMonth, 1);
 
-  // Monday=1..Sunday=7 → convert to 0..6
-  if FirstDayOfWeek = dwSunday then StartDay := 7;
-  if FirstDayOfWeek = dwMonday then StartDay := 1;
-  //StartDay:=1;
-  StartDayOfWeek := DayOfTheWeek(FirstDay) - StartDay;
-  if StartDayOfWeek < 0 then
-    StartDayOfWeek := 0;
+  // Compute offset (0..6)
+  if FirstDayOfWeek = dwMonday then
+    StartOffset := DayOfTheWeek(FirstDay) - 1        // Monday=0
+  else
+    StartOffset := DayOfTheWeek(FirstDay) mod 7;     // Sunday=0
 
   TotalDays := DaysInAMonth(AYear, AMonth);
 
-  // Previous month info
+  // Previous month
   PrevMonthDate := IncMonth(FirstDay, -1);
   PrevMonthDays := DaysInAMonth(YearOf(PrevMonthDate), MonthOf(PrevMonthDate));
 
-  // Fill previous month's trailing days
-  aRow := 1;
-  aCol := 0;
-
-  if StartDayOfWeek > 0 then
-  begin
-    // Start from the last needed day of previous month
-    aCol := 0;
-    while aCol < StartDayOfWeek do
-    begin
-      Cells[aCol, aRow] :=
-        IntToStr(PrevMonthDays - (StartDayOfWeek - aCol) + 1);
-      Inc(aCol);
-    end;
-  end;
+  // Fill previous month trailing days
+  if StartOffset > 0 then
+    for c := 0 to StartOffset - 1 do
+      Cells[c, 1] := IntToStr(PrevMonthDays - StartOffset + c + 1);
 
   // Fill current month
   DayCounter := 1;
-  aRow := 1;
-  aCol := StartDayOfWeek;
+  r := 1;
+  c := StartOffset;
 
   while DayCounter <= TotalDays do
   begin
-    Cells[aCol, aRow] := IntToStr(DayCounter);
+    Cells[c, r] := IntToStr(DayCounter);
 
     Inc(DayCounter);
-    Inc(aCol);
+    Inc(c);
 
-    if aCol > 6 then
+    if c > 6 then
     begin
-      aCol := 0;
-      Inc(aRow);
+      c := 0;
+      Inc(r);
     end;
   end;
 
   // Fill next month
-  NextMonthDate := IncMonth(FirstDay, 1);
   DayCounter := 1;
 
-  while (aRow < RowCount) do
-  begin
-    while (aCol < 7) do
-    begin
-      if Cells[aCol, aRow] = '' then
-        Cells[aCol, aRow] := IntToStr(DayCounter)
-      else
+  for r := r to 6 do
+    for c := 0 to 6 do
+      if Cells[c, r] = '' then
       begin
-        Inc(aCol);
-        Continue;
+        Cells[c, r] := IntToStr(DayCounter);
+        Inc(DayCounter);
       end;
 
-      Inc(DayCounter);
-      Inc(aCol);
-    end;
-
-    aCol := 0;
-    Inc(aRow);
-  end;
-//  endupdate;
+  EndUpdate;
 end;
 
 procedure TSGJCalendarV.DrawCell(aCol, aRow: integer; aRect: TRect;
@@ -691,37 +720,31 @@ var
   CellValue: integer;
 begin
   S := Cells[ACol, ARow];
-
   //Default
   Canvas.Brush.Color := Color;
-  //Selected
-  if (gdSelected in aState) and FDrawFocus
-  then
-    case fViewStyle of
-        cvsDays: if (aRow <> 0) then Canvas.Brush.Color := FocusColor;
-        cvsYears,cvsMonths: Canvas.Brush.Color := FocusColor;
-    end;
-
   if fViewStyle = cvsDays then
   begin
-      //Days not in mounth
-      CellValue := StrToIntDef(S, -1);
-      if (aRow = 1) and (CellValue > 20) or
-         (aRow >= 5) and (CellValue < 20) then
-        Canvas.Brush.Color := DaysNotInMonth
-      else
-      begin
+    //Days not in mounth
+    CellValue := StrToIntDef(S, -1);
+    if (aRow = 1) and (CellValue > 20) or (aRow >= 5) and (CellValue < 20) then
+      Canvas.Brush.Color := DaysNotInMonth
+    else
+    begin
       //Selected Day from Date
       if (CellValue = fDaySelected) and (fComparedSDate) then
-            Canvas.Brush.Color := DayFromDate;
+        Canvas.Brush.Color := DayFromDate;
       //Today
       if (CellValue = fDayNow) and (fComparedDate) then
         Canvas.Brush.Color := TodayColor;
-      end;
+    end;
   end;
-
-   Canvas.FillRect(aRect);
-
+  //Selected
+  if (gdSelected in aState) and FDrawFocus then
+    case fViewStyle of
+      cvsDays: if (aRow <> 0) then Canvas.Brush.Color := FocusColor;
+      cvsYears, cvsMonths: Canvas.Brush.Color := FocusColor;
+    end;
+  Canvas.FillRect(aRect);
   //Draw Grid
   if GridLineStyle = psSolid then
     if ((aRow > 0) and (fViewStyle = cvsDays)) or
@@ -730,7 +753,6 @@ begin
       Canvas.Pen.Color := GridLineColor;
       Canvas.Rectangle(ARect);
     end;
-
   //Set Font
   if (arow > 0) or (fViewStyle <> cvsDays) then
     Canvas.Font.Size := 14
@@ -744,4 +766,5 @@ end;
 initialization
   {$I resources/SGJ.CalendarView.lrs}
 {$ENDIF}
+
 end.
