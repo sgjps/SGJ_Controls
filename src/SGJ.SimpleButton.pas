@@ -4,8 +4,6 @@
 
 { date      : 2025/08/27                                             }
 
-{ version   : 1.5                                                   }
-
 { This file is part of SGJ Controls for Lazarus                      }
 
 {********************************************************************}
@@ -46,6 +44,7 @@ type
     procedure SetTitle(ATitle: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure SetDescription(ATitle: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure SetColor1(AColor: TColor);
+    procedure SetHoverColor(AColor: TColor);
     procedure SetBorderColor(AColor: TColor);
     procedure SetShowDescription(AChecked: boolean);
     procedure SetBorder(AChecked: boolean);
@@ -53,13 +52,14 @@ type
     procedure SetTitleOnCenter(AChecked: boolean);
     procedure SetArrow(AChecked: boolean);
     procedure PaintButtonBGRA(AMouseMove: boolean);
+    procedure AdjustSize; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     property Description: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF} read fDesc write SetDescription;
     property ColorNormal: TColor read fNormalColor write SetColor1;
-    property ColorHover: TColor read fHoverColor write fHoverColor;
+    property ColorHover: TColor read fHoverColor write SetHoverColor;
     property Caption: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF} read FTitle write SetTitle;
     property Images: TCustomImageList read fImages write fImages;
     property ImageIndex: integer read fImageIndex write fImageIndex;
@@ -154,7 +154,7 @@ begin
   if fShowArrow <> AChecked then
   begin
     fShowArrow := AChecked;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -163,7 +163,7 @@ begin
   if fCenterTitle <> AChecked then
   begin
     fCenterTitle := AChecked;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -172,7 +172,7 @@ begin
   if fShowBorder <> AChecked then
   begin
     fShowBorder := AChecked;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -181,7 +181,7 @@ begin
   if fRoundedCorners <> AChecked then
   begin
     fRoundedCorners := AChecked;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -190,7 +190,16 @@ begin
   if fShowDescription <> AChecked then
   begin
     fShowDescription := AChecked;
-    Paint;
+    Invalidate;
+  end;
+end;
+
+procedure TCustomSimpleSGJButton.SetHoverColor(AColor: TColor);
+begin
+  if fHoverColor <> AColor then
+  begin
+    fHoverColor := AColor;
+    Invalidate;
   end;
 end;
 
@@ -199,24 +208,22 @@ begin
   if fBorderColor <> AColor then
   begin
     fBorderColor := AColor;
-    Paint;
+    Invalidate;
   end;
 end;
 
 procedure TCustomSimpleSGJButton.DoEnter();
-var
-  image: TBGRABitmap;
 begin
   inherited DoEnter;
   fGetFocus := True;
-  paint;
+  Invalidate;
 end;
 
 procedure TCustomSimpleSGJButton.DoExit();
 begin
   inherited DoExit;
   fGetFocus := False;
-  paint;
+  Invalidate;
 end;
 
 procedure TCustomSimpleSGJButton.SetColor1(AColor: TColor);
@@ -224,7 +231,7 @@ begin
   if fNormalColor <> AColor then
   begin
     fNormalColor := AColor;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -233,7 +240,10 @@ begin
   if fTitle <> ATitle then
   begin
     fTitle := ATitle;
-    Paint;
+    if AutoSize then
+    if HandleAllocated then
+      AdjustSize; // Recalculate size when caption changes
+    Invalidate; // Redraw
   end;
 end;
 
@@ -242,14 +252,13 @@ begin
   if fDesc <> ATitle then
   begin
     fDesc := ATitle;
-    Paint;
+    Invalidate;
   end;
 end;
 
 constructor TCustomSimpleSGJButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  parent := TWinControl(AOwner);
 
   {$IfDef FPC}
   // Set default width and height
@@ -262,7 +271,7 @@ begin
   Height := 32;
   ParentBackground := False;
   ImageIndex := -1;
-  color := Parent.Brush.Color;
+
   fNormalColor := clBtnface;
   fHoverColor := clSilver;
   color := fNormalColor;
@@ -274,10 +283,9 @@ procedure TCustomSimpleSGJButton.PaintButtonBGRA(AMouseMove: boolean);
 var
   image: TBGRABitmap;
   AColor: TColor;
+  IWidth, IHeight: integer;
 begin
-  Canvas.Font.Color := Font.Color;
-  Canvas.Font.Size := Font.Size;
-  Canvas.Font.Style := Font.Style;
+  Canvas.Font.Assign(Self.Font);
 
   if not AMouseMove then
   begin
@@ -296,23 +304,23 @@ begin
     image.FillRoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10, ColorToBGRA(
       ColorToRGB(AColor)))
   else
-    image.FillRect(0, 0, Width, Height, ColorToBGRA(ColorToRGB(AColor)));
+    image.FillRect(0, 0, Width, Height, ColorToBGRA(AColor));
 
   if fShowBorder then
   begin
     if not fRoundedCorners then
       image.RectangleAntialias(0, 0, Width - 1, Height - 1, ColorToBGRA(
-        ColorToRGB(fBorderColor)), 1)
+        fBorderColor), 1)
     else
       image.RoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10, ColorToBGRA(
-        ColorToRGB(fBorderColor)), 1);
+        fBorderColor), 1);
   end;
 
   if fGetFocus = True then
   begin
     image.JoinStyle := pjsBevel;
     image.PenStyle := psDot;
-    image.RectangleAntialias(0, 0, Width - 1, Height - 1, ColorToRGB(clwhite), 1);
+    image.RectangleAntialias(0, 0, Width - 1, Height - 1, ColorToBGRA(clwhite), 1);
   end;
 
   image.Draw(Canvas, 0, 0, True);
@@ -324,74 +332,72 @@ begin
       (Canvas.TextHeight('>') div 2), '>');
   end;
 
-
-  if (fImages <> nil) then
+  if (fImages <> nil) and (fImageIndex >= 0) and (fImageIndex < fImages.Count) then
   begin
-    if (fImageIndex <> -1) and (fImageIndex < fImages.Count) then
+    iWidth:=fImages.Width * Screen.PixelsPerInch div 96;
+    iHeight:=fImages.Height * Screen.PixelsPerInch div 96;
+    fImages.DrawForPPI(Canvas,8,(Height div 2) - (iHeight div 2),fImageIndex,fimages.Width,
+    Screen.PixelsPerInch,1.0,true);
+
+    // Tekst obok obrazka
+    if not fShowDescription then
     begin
-      fImages.Resolution[round(fImages.Width *
-        (Forms.Screen.PixelsPerInch / 96))].Draw(Canvas, round(8 *
-        (Forms.Screen.PixelsPerInch / 96)), (Height div 2) -
-        (fImages.Resolution[round(fImages.Width * (Forms.Screen.PixelsPerInch / 96))].Height div 2)
-        , fImageIndex, True);
-      if not fShowDescription then
-        Canvas.TextOut(fImages.Resolution[round(fImages.Width *
-          (Forms.Screen.PixelsPerInch / 96))].Width + 24, (Height div 2) -
-          (Canvas.TextHeight(fTitle) div 2), fTitle)
+      Canvas.TextOut(
+        16+iWidth,
+        (Height div 2) - (Canvas.TextHeight(fTitle) div 2),
+        fTitle
+      );
+    end
+    else
+    begin
+      Canvas.TextOut(
+        16+iWidth,
+        (Height div 2) - Canvas.TextHeight(fTitle),
+        fTitle
+      );
+
+      Canvas.Font.Assign(fDescriptionFont);
+
+      if Canvas.TextWidth(fDesc) < (Width - (IWidth  + 24)) then
+        Canvas.TextOut(16+iWidth, (Height div 2) + 2, fDesc)
       else
-      begin
-        Canvas.TextOut(fImages.Resolution[round(fImages.Width *
-          (Forms.Screen.PixelsPerInch / 96))].Width + 24, (Height div 2) -
-          (Canvas.TextHeight(fTitle)) - 1, fTitle);
-        Canvas.Font.Color := fDescriptionFont.Color;
-        Canvas.Font.Size := fDescriptionFont.Size;
-        Canvas.Font.Style := fDescriptionFont.Style;
-        if Canvas.TextWidth(fDesc) <
-          (Width - (fImages.Resolution[round(fImages.Width * (Forms.Screen.PixelsPerInch / 96))].Width + 32)) then
-          Canvas.TextOut(fImages.Resolution[round(fImages.Width *
-            (Forms.Screen.PixelsPerInch / 96))].Width + 24, (Height div 2) + 1, fDesc)
-        else
-          Canvas.TextOut(fImages.Resolution[round(fImages.Width *
-            (Forms.Screen.PixelsPerInch / 96))].Width + 24, (Height div 2) + 1, '...');
-      end;
+        Canvas.TextOut(16+iWidth, (Height div 2) + 2, '...');
     end;
   end
+else
+if not fShowDescription then
+begin
+  if not fCenterTitle then
+    Canvas.TextOut(8, (Height div 2) - (Canvas.TextHeight(fTitle) div 2), fTitle)
   else
-  if not fShowDescription then
-  begin
-    if not fCenterTitle then
-      Canvas.TextOut(8, (Height div 2) - (Canvas.TextHeight(fTitle) div 2), fTitle)
-    else
-      Canvas.TextOut(Width div 2 - Canvas.TextWidth(fTitle) div
-        2, (Height div 2) - (Canvas.TextHeight(fTitle) div 2), fTitle);
-  end
-  else
-  begin
-    Canvas.TextOut(8, (Height div 2) - (Canvas.TextHeight(fTitle)) - 1, fTitle);
-    Canvas.Font.Color := fDescriptionFont.Color;
-    Canvas.Font.Size := fDescriptionFont.Size;
-    Canvas.Font.Style := fDescriptionFont.Style;
-    Canvas.TextOut(8, (Height div 2) + 1, fDesc);
-  end;
+    Canvas.TextOut(Width div 2 - Canvas.TextWidth(fTitle) div
+      2, (Height div 2) - (Canvas.TextHeight(fTitle) div 2), fTitle);
+end
+else
+begin
+  Canvas.TextOut(8, (Height div 2) - (Canvas.TextHeight(fTitle)) - 1, fTitle);
+  Canvas.Font.Assign(fDescriptionFont);
+  Canvas.TextOut(8, (Height div 2) + 1, fDesc);
+end;
 end;
 
 procedure TCustomSimpleSGJButton.MouseMove(Shift: TShiftState; X, Y: integer);
 begin
   inherited;
   PaintButtonBGRA(True);
-  Cursor := crHandPoint;
+  if Cursor <> crHandPoint then Cursor := crHandPoint;
 end;
 
 procedure TCustomSimpleSGJButton.MouseLeave(var Msg: TMessage);
 begin
   inherited;
   PaintButtonBGRA(False);
-  Cursor := crDefault;
+  if Cursor <> crDefault then Cursor := crDefault;
 end;
 
 procedure TCustomSimpleSGJButton.Paint();
 begin
-  inherited;
+  inherited Paint;
   if HandleAllocated then
     PaintButtonBGRA(False);
 end;
@@ -402,6 +408,32 @@ begin
   inherited Destroy;
 end;
 
+procedure TCustomSimpleSGJButton.AdjustSize;
+var
+  TextWidth, TextHeight: Integer;
+  iWidth: integer = 0;
+  IHeight: integer = 0;
+begin
+  if not HandleAllocated then Exit;
+  if (fImages <> nil) and (fImageIndex >= 0) and (fImageIndex < fImages.Count) then
+  begin
+    iWidth:=fImages.Width * Screen.PixelsPerInch div 96;
+    iHeight:=fImages.Height * Screen.PixelsPerInch div 96;
+  end;
+  Canvas.Font.Assign(Self.Font);
+  TextWidth := Canvas.TextWidth(fTitle);
+  TextHeight := Canvas.TextHeight(fTitle);
+  if fShowDescription then
+  begin
+  if Canvas.TextWidth(fDesc)>TextWidth then
+  TextWidth:=Canvas.TextWidth(fDesc);
+  TextHeight:=TextHeight+Canvas.TextHeight(fDesc);
+  end;
+  if TextHeight<iHeight then TextHeight:=iHeight;
+  // Add padding for button borders
+  if Autosize then
+  SetBounds(Left, Top, TextWidth + 20+iWidth, TextHeight + 10);
+end;
 
 {$IFDEF FPC}
 initialization
