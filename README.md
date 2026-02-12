@@ -15,7 +15,7 @@ TSGJButton - Button with image. [Lazarus]
               
 TSGJCheckbox - Checkbox | RadioButton | ToggleButton | ToggleRadioButton [Lazarus]
 
-TSGJShellTreeView - [Test/Unstable] Directory TreeView [Lazarus]
+TSGJShellTreeView - Directory TreeView [Lazarus]
 
 TSGJCalendarView - Calendar control for Lazarus.
 
