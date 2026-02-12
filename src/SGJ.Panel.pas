@@ -47,10 +47,10 @@ type
           procedure AdjustClientRect(var aRect: TRect); override;
           procedure Paint; override;
   published
-          property Caption: TTranslateString read FTitle write SetCaption;
-          property CaptionPosition: TSGJPnPos read fCaptionPos write SetCaptionPos;
-          property BorderColor: TColor read fBorderColor write SetBorderColor;
-	  property BorderEnabled: boolean read fShowBorder write SetBorder;
+          property Title: TTranslateString read FTitle write SetCaption;
+          property TitlePosition: TSGJPnPos read fCaptionPos write SetCaptionPos;
+          property BorderColor: TColor read fBorderColor write SetBorderColor default $00B16300;
+	  property BorderEnabled: boolean read fShowBorder write SetBorder default false;
           property Align;
           property Alignment;
           property Anchors;
@@ -142,7 +142,7 @@ begin
     if fCaptionPos<>AValue then
     begin
        fCaptionPos:=AValue;
-       Paint();
+       Invalidate();
     end;
 end;
 
@@ -151,7 +151,7 @@ begin
   if fBorderColor<>AColor then
   begin
      fBorderColor:=AColor;
-     Paint();
+     Invalidate();
   end;
 end;
 
@@ -160,7 +160,7 @@ begin
   if fTitle<>ACaption then
   begin
      fTitle:=ACaption;
-     Paint();
+      Invalidate();
   end;
 end;
 
@@ -169,7 +169,7 @@ begin
   if fShowBorder<>ABorder then
   begin
      fShowBorder:=ABorder;
-     Paint();
+      Invalidate();
   end;
 end;
 
@@ -177,21 +177,20 @@ constructor TSGJPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   ControlStyle := ControlStyle - [csSetCaption];
-  parent:=TWinControl(AOwner);
+
   {$IfDef FPC}
   // Set default width and height
   with GetControlClassDefaultSize do
       SetInitialBounds(0, 0, CX, CY);
   {$EndIf}
 
-  self.BorderStyle:=bsNone;
-  self.BevelInner:=bvNone;
-  self.BevelOuter:=bvNone;
-  self.Height:=28;
-  self.Width:=60;
-  self.ParentBackground:=true;
-  self.BorderColor:=$00B16300;
-
+  BorderStyle:=bsNone;
+  BevelInner:=bvNone;
+  BevelOuter:=bvNone;
+  Height:=28;
+  Width:=60;
+  ParentBackground:=true;
+  BorderColor:=$00B16300;
 end;
 
 procedure TSGJPanel.Paint();
@@ -213,12 +212,12 @@ begin
 	 if fTitle='' then
             Canvas.RoundRect(2,2,Self.width-2,Self.height-2,8,8)
 	  else
-          if CaptionPosition <>poBottom then
+          if fCaptionPos <>poBottom then
             Canvas.RoundRect(2,(TextHeight(fTitle)div 2),Self.Width-2,Self.Height-2,8,8)
           else
             Canvas.RoundRect(2,2,Self.width-2,Self.height-TextHeight('T') div 2,8,8);
 
-       Case CaptionPosition of
+       Case fCaptionPos of
           poDefault: Canvas.TextOut(15,0, Self.fTitle);
           poCenter: Canvas.TextOut(Self.Width div 2 - TextWidth(fTitle) div 2 ,0, fTitle);
           poBottom: Canvas.TextOut(Self.Width div 2 - TextWidth(fTitle) div 2,self.Height-TextHeight('T')-2, Self.fTitle);
@@ -229,7 +228,7 @@ end;
 procedure TSGJPanel.AdjustClientRect(var aRect: TRect);
 begin
     inherited AdjustClientRect(ARect);
-    if caption='' then
+    if fTitle='' then
     ARect:= Rect(
             ARect.left+5,
             ARect.Top+6,
@@ -237,7 +236,7 @@ begin
             ARect.Bottom-6
             )
     else
-    if CaptionPosition<>poBottom then
+    if fCaptionPos<>poBottom then
     ARect:= Rect(
             ARect.left+5,
             ARect.Top+self.Canvas.TextHeight('T')+5,
