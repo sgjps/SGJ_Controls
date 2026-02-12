@@ -8,28 +8,32 @@ uses
   {$IFDEF MSWINDOWS}
   Windows, DWMApi, uxtheme,
   {$ENDIF}
-  Forms, Classes, SysUtils, Dialogs, Graphics, LResources;
+  Forms, Controls, Classes, SysUtils, Dialogs, Graphics, LResources;
 
 type
-  TSGJRoundedCornels = (rcCornerDefault, rcCornerOff, rcCornerON, rcCornerSmall);
+
+  TSGJWin32Ex = class;
+
+  TSGJRoundedCorners = (rcCornerDefault, rcCornerOff, rcCornerOn, rcCornerSmall);
 
   TSGJWin11 = class(TPersistent)
   private
-    fRoundedCornels: TSGJRoundedCornels;
+    fRoundedCorners: TSGJRoundedCorners;
     fFormHandle: THandle;
     fTitleBar_Color: TColor;
     fTitleBar_FontColor: TColor;
     fFormBorder: TColor;
-    procedure SetRoundedCornels(AValue: TSGJRoundedCornels);
-    procedure SetWin11Cornels(AValue: TSGJRoundedCornels);
+    fOwner:TSGJWin32Ex;
+    procedure SetRoundedCorners(AValue: TSGJRoundedCorners);
+    procedure SetWin11Corners(AValue: TSGJRoundedCorners);
     procedure Set_DWMTitle(AValue: TColor);
     procedure Set_DWMFont(AValue: TColor);
     procedure Set_DWMBorder(AValue: TColor);
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
   published
-    property RoundedCornels: TSGJRoundedCornels
-      read fRoundedCornels write SetRoundedCornels;
+    property RoundedCorners: TSGJRoundedCorners
+      read fRoundedCorners write SetRoundedCorners;
     property BorderColor: TColor read fFormBorder write Set_DWMBorder;
     property CaptionFontColor: TColor read fTitleBar_FontColor write Set_DWMFont;
     property CaptionColor: TColor read fTitleBar_Color write Set_DWMTitle;
@@ -45,11 +49,12 @@ type
     fRight: integer;
     fFormHandle: THandle;
     fSheetOfGlass: boolean;
+    fOwner:TSGJWin32Ex;
     procedure SetEnabled(AValue: boolean);
     procedure SetSheetOfGlass(AValue: boolean);
     procedure EnableGlass(AValue: boolean);
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
   published
     property Left: integer read fLeft write fLeft;
     property Right: integer read fRight write fRight;
@@ -63,10 +68,14 @@ type
   private
     fGlassFrame: TSGJGlassFrame;
     fFormHandle: THandle;
+    fDisableDWM: boolean;
+    fOwner:TSGJWin32Ex;
+    procedure SetDisableDWM(AVAlue: boolean);
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
     destructor Destroy; override;
   published
+    property DisableDWMForWindow: boolean read fDisableDWM write SetDisableDWM;
     property GlassFrame: TSGJGlassFrame read fGlassFrame write fGlassFrame;
   end;
 
@@ -74,9 +83,11 @@ type
   private
     fDarkTitleBar: boolean;
     fFormHandle: THandle;
+    fOwner:TSGJWin32Ex;
     procedure SetDarkTitleBar(AValue: boolean);
+    function SetDarkModeForTitleBar(hWnd: HWND; DarkMode: Bool): integer;
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
   published
     property TitleBar: boolean read fDarkTitleBar write SetDarkTitleBar;
   end;
@@ -85,8 +96,9 @@ type
   private
     fDarkMode: TSGJDarkMode;
     fFormHandle: THandle;
+    fOwner:TSGJWin32Ex;
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
     destructor Destroy; override;
   published
     property DarkMode: TSGJDarkMode read fDarkMode write fDarkMode;
@@ -97,11 +109,13 @@ type
     fTransparentColor: boolean;
     fTransparentColorValue: TColor;
     fFormHandle: THandle;
+    fOwner:TSGJWin32Ex;
     procedure SetColor(AValue: TColor);
+    procedure SetTransparent(AValue: boolean);
   public
-    constructor Create(AHandle: THandle);
+    constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
   published
-    property TransparentColor: boolean read fTransparentColor write fTransparentColor;
+    property TransparentColor: boolean read fTransparentColor write SetTransparent;
     property TransparentColorValue: TColor read fTransparentColorValue write SetColor;
   end;
 
@@ -112,6 +126,7 @@ type
     fWinVistaOpt: TSGJWinVista;
     fWin2k: TSGJWin2k;
     fOwnerHandle: THandle;
+    function IsRuntime: Boolean;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -167,11 +182,11 @@ var
   UxThemeLibrary: THandle;
   ReferenceCount: integer;
 
-  {$IFDEF MSWINDOWS}
+{$IFDEF MSWINDOWS}
 var
   SetPreferredAppMode: function(appMode: TPreferredAppMode): TPreferredAppMode; stdcall;
   AllowDarkModeForWindow: function(hWnd: HWND; allow: bool): bool; stdcall;
-  {$ENDIF}
+{$ENDIF}
 function InitUxThemeLibrary: boolean;
 procedure Register;
 
@@ -218,16 +233,17 @@ begin
   Result := UxThemeLibrary > 0;
 end;
 
-constructor TSGJWin11.Create(AHandle: THandle);
+constructor TSGJWin11.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   inherited Create;
   fFormHandle := AHandle;
+  fOwner:=AOwner;
   fTitleBar_Color := clNone;
   fTitleBar_FontColor := clNone;
   fFormBorder := clNone;
 end;
 
-procedure TSGJWin11.SetWin11Cornels(AValue: TSGJRoundedCornels);
+procedure TSGJWin11.SetWin11Corners(AValue: TSGJRoundedCorners);
 var
   DWM_WINDOW_CORNER_PREFERENCE: DWORD;
 begin
@@ -247,26 +263,30 @@ begin
   {$ENDIF}
 end;
 
-procedure TSGJWin11.SetRoundedCornels(AValue: TSGJRoundedCornels);
+procedure TSGJWin11.SetRoundedCorners(AValue: TSGJRoundedCorners);
 begin
-  fRoundedCornels := AValue;
-  SetWin11Cornels(AValue);
+  fRoundedCorners := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
+  SetWin11Corners(AValue);
 end;
 
 
-constructor TSGJDarkMode.Create(AHandle: THandle);
+constructor TSGJDarkMode.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   fFormHandle := AHandle;
+  fOwner:=AOwner;
 end;
 {$IFDEF MSWINDOWS}
-function SetDarkModeForTitleBar(hWnd: HWND; DarkMode: Bool): integer;
+function TSGJDarkMode.SetDarkModeForTitleBar(hWnd: HWND; DarkMode: Bool): integer;
 var
   Policy: TDWMNCRENDERINGPOLICY;
 begin
-
   Result := 0;
-  //SetNonClientRenderingPolicy(hWnd, DWMNCRP_ENABLED);
-  Policy := DWMNCRP_ENABLED;
+
+  if DarkMode then
+    Policy := DWMNCRP_ENABLED
+  else
+    Policy := DWMNCRP_USEWINDOWSTYLE;
   DwmSetWindowAttribute(hWnd, DWMWA_NCRENDERING_POLICY, @Policy, SizeOf(Policy));
   if (Win32BuildNumber >= 17763) and (Win32BuildNumber < 18985) then
     if (DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD,
@@ -276,12 +296,12 @@ begin
     if (DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
       @DarkMode, SizeOf(DarkMode)) <> S_OK) then
       Result := 1;
-
 end;
 {$ENDIF}
 procedure TSGJDarkMode.SetDarkTitleBar(AValue: boolean);
 begin
   fDarkTitleBar := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   {$IFDEF MSWINDOWS}
   if fDarkTitleBar then
     SetDarkModeForTitleBar(fFormHandle, True)
@@ -294,15 +314,16 @@ procedure TSGJWin11.Set_DWMBorder(AValue: TColor);
 {$IFDEF MSWINDOWS}
 var
   ColorRef: TCOLORREF;
-  {$ENDIF}
+{$ENDIF}
 begin
   if fFormBorder <> AValue then
     fFormBorder := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   {$IFDEF MSWINDOWS}
   ColorRef := ColorToRGB(AValue);
   if AValue <> clNone then
     DwmSetWindowAttribute(fFormHandle, DWMWA_BORDER_COLOR, @ColorRef, SizeOf(ColorRef));
-{$ENDIF}
+  {$ENDIF}
 end;
 
 procedure TSGJWin11.Set_DWMTitle(AValue: TColor);
@@ -313,35 +334,38 @@ var
 begin
   if fTitleBar_Color <> AValue then
     fTitleBar_Color := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   {$IFDEF MSWINDOWS}
   ColorRef := ColorToRGB(AValue);
   if AValue <> clNone then
     DwmSetWindowAttribute(fFormHandle, DWMWA_CAPTION_COLOR, @ColorRef, SizeOf(ColorRef));
-{$ENDIF}
+  {$ENDIF}
 end;
 
 procedure TSGJWin11.Set_DWMFont(AValue: TColor);
 {$IFDEF MSWINDOWS}
 var
   ColorRef: TCOLORREF;
-  {$ENDIF}
+{$ENDIF}
 begin
   if fTitleBar_FontColor <> AValue then
     fTitleBar_FontColor := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   {$IFDEF MSWINDOWS}
   ColorRef := ColorToRGB(AValue);
   if AValue <> clNone then
     DwmSetWindowAttribute(fFormHandle, DWMWA_TEXT_COLOR, @ColorRef, SizeOf(ColorRef));
-{$ENDIF}
+  {$ENDIF}
 end;
 
 
 
-constructor TSGJWin10.Create(AHandle: THandle);
+constructor TSGJWin10.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   inherited Create;
   fFormHandle := AHandle;
-  fDarkMode := TSGJDarkMode.Create(AHandle);
+  fDarkMode := TSGJDarkMode.Create(AHandle, AOwner);
+  fOwner:=AOwner;
 end;
 
 destructor TSGJWin10.Destroy;
@@ -351,14 +375,16 @@ begin
 end;
 
 
-constructor TSGJGlassFrame.Create(AHandle: THandle);
+constructor TSGJGlassFrame.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   fFormHandle := AHandle;
+  fOwner:=AOwner;
 end;
 
 procedure TSGJGlassFrame.SetEnabled(AValue: boolean);
 begin
   fEnabled := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   if AValue = True then
     EnableGlass(True)
   else
@@ -368,6 +394,7 @@ end;
 procedure TSGJGlassFrame.SetSheetOfGlass(AValue: boolean);
 begin
   fSheetOfGlass := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
   if fEnabled then
     EnableGlass(True);
 end;
@@ -377,7 +404,7 @@ procedure TSGJGlassFrame.EnableGlass(AValue: boolean);
 var
   mgn: TMargins;
   cEnable: BOOL;
-  {$ENDIF}
+{$ENDIF}
 begin
   {$IFDEF MSWINDOWS}
   if Win32MajorVersion >= 6 then
@@ -416,11 +443,12 @@ begin
   {$ENDIF}
 end;
 
-constructor TSGJWinVista.Create(AHandle: THandle);
+constructor TSGJWinVista.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   inherited Create;
   fFormHandle := AHandle;
-  fGlassFrame := TSGJGlassFrame.Create(fFormHandle);
+  fGlassFrame := TSGJGlassFrame.Create(fFormHandle, AOwner);
+  fOwner:=AOwner;
 end;
 
 destructor TSGJWinVista.Destroy;
@@ -429,31 +457,102 @@ begin
   inherited Destroy;
 end;
 
-constructor TSGJWin2k.Create(AHandle: THandle);
+procedure TSGJWinVista.SetDisableDWM(AValue: boolean);
+var
+  Policy: TDWMNCRENDERINGPOLICY;
+begin
+  if fDisableDWM <> AValue then
+    fDisableDWM := AValue;
+  if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
+  {$IFDEF MSWINDOWS}
+  if fDisableDWM then
+    Policy := DWMNCRP_DISABLED
+  else
+    Policy := DWMNCRP_ENABLED;
+  DwmSetWindowAttribute(fFormHandle, DWMWA_NCRENDERING_POLICY, @Policy, SizeOf(Policy));
+  {$ENDIF}
+end;
+
+constructor TSGJWin2k.Create(AHandle: THandle; AOwner: TSGJWin32Ex);
 begin
   inherited Create;
   fFormHandle := AHandle;
+  fOwner:=AOwner;
 end;
 
 procedure TSGJWin2k.SetColor(AValue: TColor);
 begin
   if fTransparentColorValue <> AValue then
+  begin
     fTransparentColorValue := AValue;
+    if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
+    {$IFDEF MSWINDOWS}
+    if fTransparentColor then
+    begin
+      SetWindowLong(fFormHandle, GWL_EXSTYLE,
+        GetWindowLong(fFormHandle, GWL_EXSTYLE) or WS_EX_LAYERED);
+
+      SetLayeredWindowAttributes(fFormHandle, fTransparentColorValue,
+        0, LWA_COLORKEY);
+    end;
+    {$ENDIF}
+  end;
 end;
 
+procedure TSGJWin2k.SetTransparent(AValue: boolean);
+begin
+  if fTransparentColor <> AValue then
+  begin
+    fTransparentColor := AValue;
+    if Assigned(fOwner) and not fOwner.IsRuntime then Exit;
+    {$IFDEF MSWINDOWS}
+    if fTransparentColor then
+    begin
+      SetWindowLong(fFormHandle, GWL_EXSTYLE,
+        GetWindowLong(fFormHandle, GWL_EXSTYLE) or WS_EX_LAYERED);
+
+      SetLayeredWindowAttributes(fFormHandle, fTransparentColorValue,
+        0, LWA_COLORKEY);
+    end
+    else
+    begin
+      // Remove layered style
+      SetWindowLong(fFormHandle, GWL_EXSTYLE,
+        GetWindowLong(fFormHandle, GWL_EXSTYLE) and not WS_EX_LAYERED);
+    end;
+    {$ENDIF}
+  end;
+end;
+
+
 constructor TSGJWin32Ex.Create(AOwner: TComponent);
+var
+  F: TCustomForm;
 begin
   inherited Create(AOwner);
-  fOwnerHandle := TForm(AOwner).Handle;
-  fWin11Opt := TSGJWin11.Create(fOwnerHandle);
-  fWin10opt := TSGJWin10.Create(fOwnerHandle);
-  fWinVistaOpt := TSGJWinVista.Create(fOwnerHandle);
-  fWin2k := TSGJWin2k.Create(fOwnerHandle);
+  if AOwner is TControl then
+    F := GetParentForm(TControl(AOwner))
+  else if AOwner is TCustomForm then
+    F := TCustomForm(AOwner)
+  else
+    F := nil;
+
+  if Assigned(F) then
+    fOwnerHandle := F.Handle
+  else
+    fOwnerHandle := 0;
+
+  fWin11Opt := TSGJWin11.Create(fOwnerHandle, self);
+  fWin10opt := TSGJWin10.Create(fOwnerHandle, self);
+  fWinVistaOpt := TSGJWinVista.Create(fOwnerHandle, self);
+  fWin2k := TSGJWin2k.Create(fOwnerHandle, self);
 end;
+
 
 procedure TSGJWin32Ex.Loaded;
 begin
   inherited Loaded;
+  if csDesigning in ComponentState then Exit;
   {$IFDEF MSWINDOWS}
   if fWin2k.fTransparentColor = True then
   begin
@@ -475,11 +574,18 @@ begin
   inherited Destroy;
 end;
 
+function TSGJWin32Ex.IsRuntime: Boolean;
+begin
+  Result := not (csDesigning in ComponentState);
+end;
+
+
 initialization
   ReferenceCount := 0;
   {$IFDEF FPC}
     {$I resources/SGJ.Win32Ex.lrs}
   {$ENDIF}
+
 finalization
   while ReferenceCount > 0 do
     FreeUxThemeLibrary;
