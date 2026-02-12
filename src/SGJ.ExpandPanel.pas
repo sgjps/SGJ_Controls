@@ -27,14 +27,14 @@ Type
   private
     fBackground:TColor;
     fBorder:TColor;
-    frounderdCornerls:boolean;
+    frounderdCorners:boolean;
     procedure SetBackground(AValue: TColor);
   public
     constructor Create(AControl: TControl); virtual;
   published
     property Background: TColor read fBackground write SetBackground;
     property BorderColor: TColor read fBorder write fBorder;
-    property RoundedCornels: boolean read frounderdCornerls write frounderdCornerls;
+    property RoundedCorners: boolean read frounderdCorners write frounderdCorners;
   end;
 
 type
@@ -44,6 +44,14 @@ type
     fClientAreaSettings: TSGJEPClientArea;
     fHeight: integer;
     fCollapsed: boolean;
+
+    fAnimTimer: TTimer;
+    fAnimTarget: Integer;
+    fAnimStep: Integer;
+    procedure AnimTimerTick(Sender: TObject);
+    procedure StartAnimation(TargetHeight: Integer);
+
+    procedure SetCollapsed(AValue: boolean);
     procedure HeaderClick(Sender: TObject);
     procedure HeaderKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -58,7 +66,7 @@ type
     property HeaderButton: THeaderSGJButton read fHeaderButton;
     property ClientArea: TSGJEPClientArea read fClientAreaSettings write fClientAreaSettings;
     property ExpandedHeight: integer read fHeight write SetHeight;
-    property Collapsed: boolean read fCollapsed write fCollapsed;
+    property Collapsed: boolean read fCollapsed write SetCollapsed;
    // property BorderStyle;
     property Font;
     property OnClick;
@@ -127,7 +135,6 @@ end;
 constructor TSGJExpandPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  parent := TWinControl(AOwner);
 
   // Set default width and height
   with GetControlClassDefaultSize do
@@ -136,8 +143,8 @@ begin
   BorderStyle := bsNone;
   Height := 100;
   Width := 100;
-  ParentBackground := False;
-  color := Parent.Brush.Color;
+  ParentBackground := false;
+  color := clDefault;
   ChildSizing.VerticalSpacing:=3;
 
   ControlStyle := ControlStyle +[csAcceptsControls];
@@ -157,6 +164,12 @@ begin
 
   fHeight := 200;
   fHeaderButton.ButtonArrow:=baDown;
+
+  fAnimTimer := TTimer.Create(Self);
+fAnimTimer.Enabled := False;
+fAnimTimer.Interval := 10;
+fAnimTimer.OnTimer := @AnimTimerTick;
+
 end;
 
 destructor TSGJExpandPanel.Destroy;
@@ -168,8 +181,13 @@ end;
 
 procedure TSGJExpandPanel.SetHeight(AValue: integer);
 begin
+  if fHeight = AValue then
+    Exit;
   fHeight := AValue;
+  if not fCollapsed then
+    Height := fHeight;
 end;
+
 
 procedure TSGJExpandPanel.HeaderKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -192,16 +210,7 @@ end;
 
 procedure TSGJExpandPanel.HeaderClick(Sender: TObject);
 begin
-  if Height > fHeaderButton.Height then
-  begin
-    Height := fHeaderButton.Height;
-    fHeaderButton.ButtonArrow:=baDown;
-  end
-  else
-  begin
-    Height := fHeight;
-    fHeaderButton.ButtonArrow:=baUp;
-  end;
+  Collapsed := not Collapsed;
 end;
 
 procedure TSGJExpandPanel.Loaded;
@@ -209,10 +218,10 @@ var
   i: integer;
 begin
   inherited;
+  if Parent <> nil then Color := Parent.Brush.Color;
   ExpandedHeight:=ScaleX(ExpandedHeight,96);
-  if not (csDesigning in ComponentState) then
-  if fCollapsed then
-  HeaderClick(self);
+  if not (csDesigning in ComponentState) then SetCollapsed(fCollapsed);
+
 end;
 
 procedure TSGJExpandPanel.Paint;
@@ -220,11 +229,61 @@ begin
   inherited;
   Canvas.Pen.Color:=ClientArea.BorderColor;
   Canvas.Brush.Color:=ClientArea.Background;
-  if ClientArea.RoundedCornels then
+  if ClientArea.RoundedCorners then
   Canvas.RoundRect(0,fHeaderButton.Height+3,Width,height,10,10)
   else
   Canvas.Rectangle(0,fHeaderButton.Height+3,Width,height);
 end;
+
+procedure TSGJExpandPanel.SetCollapsed(AValue: boolean);
+begin
+  if fCollapsed = AValue then
+    Exit;
+
+  fCollapsed := AValue;
+
+  if fCollapsed then
+  begin
+    StartAnimation(fHeaderButton.Height);
+    fHeaderButton.ButtonArrow := baDown;
+  end
+  else
+  begin
+    StartAnimation(fHeight);
+    fHeaderButton.ButtonArrow := baUp;
+  end;
+
+end;
+
+procedure TSGJExpandPanel.AnimTimerTick(Sender: TObject);
+var
+  NewHeight: Integer;
+begin
+  NewHeight := Height + fAnimStep;
+
+  if ((fAnimStep > 0) and (NewHeight >= fAnimTarget)) or
+     ((fAnimStep < 0) and (NewHeight <= fAnimTarget)) then
+  begin
+    Height := fAnimTarget;
+    fAnimTimer.Enabled := False;
+    Exit;
+  end;
+
+  Height := NewHeight;
+end;
+
+procedure TSGJExpandPanel.StartAnimation(TargetHeight: Integer);
+begin
+  fAnimTarget := TargetHeight;
+
+  if TargetHeight > Height then
+    fAnimStep := 20
+  else
+    fAnimStep := -20;
+
+  fAnimTimer.Enabled := True;
+end;
+
 
 {$IFDEF FPC}
 initialization
