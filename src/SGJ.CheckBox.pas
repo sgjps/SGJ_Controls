@@ -2,20 +2,19 @@
 // home page : https://www.sgjps.com
 // home page : https://www.hiperapps.com
 // email     : sgj@sgjps.com
-//
-// date      : 2025/12/03
-// version   : 1.0
-//
-//
-//
+
+// date      : 2025/12.03
+
+
 // This file is part of SGJ Controls
-//
+
 //********************************************************************
 unit SGJ.CheckBox;
 
 {$IFDEF FPC}
 {$mode ObjFPC}{$H+}
 {$ENDIF}
+
 interface
 
 uses
@@ -37,7 +36,7 @@ type
     fColorOuter: TColor;
     fColorDisabled: TColor;
     fButtonStyle: TSGJCheckboxStyle;
-    fToogleStyle:TSGJToogleStyle;
+    fToogleStyle: TSGJToogleStyle;
     FOnChange: TNotifyEvent;
     function GetBtnStyle: TSGJCheckboxStyle;
     procedure SetBtnStyle(Value: TSGJCheckboxStyle);
@@ -50,16 +49,12 @@ type
     procedure Assign(Source: TPersistent); override;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
   published
-    property ColorInner: TColor
-      read fColorInner write SetColorInner default clWhite;
-    property ColorOuter: TColor
-      read fColorOuter write SetColorOuter default clBlack;
+    property ColorInner: TColor read fColorInner write SetColorInner default clWhite;
+    property ColorOuter: TColor read fColorOuter write SetColorOuter default clBlack;
     property ColorDisabled: TColor read fColorDisabled
       write SetColorDisabled default clGray;
-    property CheckBoxStyle: TSGJCheckboxStyle
-      read GetBtnStyle write SetBtnStyle;
-    property ToogleStyle: TSGJToogleStyle
-      read GetToogleStyle write SetToogleStyle;
+    property CheckBoxStyle: TSGJCheckboxStyle read GetBtnStyle write SetBtnStyle;
+    property ToogleStyle: TSGJToogleStyle read GetToogleStyle write SetToogleStyle;
   end;
 
 type
@@ -68,6 +63,7 @@ type
     fChecked: boolean;
     fGetFocus: boolean;
     fVisualOpt: TSGJCBVisual;
+    FOnChange: TNotifyEvent;
     procedure SetVisualOptions(Value: TSGJCBVisual);
     function GetChecked: boolean;
     procedure SetChecked(Value: boolean);
@@ -75,7 +71,7 @@ type
     procedure UncheckOthers;
     procedure OnColorChange(Sender: TObject);
   protected
-    property ParentColor default False;
+    property ParentColor default True;
     procedure DoEnter; override;
     procedure DoExit; override;
     procedure KeyDown(var Key: word; Shift: TShiftState); override;
@@ -87,6 +83,7 @@ type
     procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
     procedure Click; override;
   published
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property VisualOptions: TSGJCBVisual read fVisualOpt write SetVisualOptions;
     property Align;
     property Anchors;
@@ -110,11 +107,11 @@ type
     property ParentShowHint;
     property PopupMenu;
     property ShowHint;
-  //  property State;
+    //  property State;
     property TabOrder;
     property TabStop default True;
     property Visible;
-  //  property OnChange;
+    //  property OnChange;
     property OnClick;
     property OnContextPopup;
     property OnDragDrop;
@@ -153,6 +150,8 @@ begin
     FColorInner := TSGJCBVisual(Source).ColorInner;
     FColorOuter := TSGJCBVisual(Source).ColorOuter;
     FColorDisabled := TSGJCBVisual(Source).ColorDisabled;
+    fButtonStyle := TSGJCBVisual(Source).fButtonStyle;
+    fToogleStyle := TSGJCBVisual(Source).fToogleStyle;
   end
   else
     inherited;
@@ -161,6 +160,7 @@ end;
 procedure TSGJCheckbox.SetVisualOptions(Value: TSGJCBVisual);
 begin
   FVisualOpt.Assign(Value);
+  invalidate;
 end;
 
 procedure TSGJCBVisual.SetColorInner(AValue: TColor);
@@ -195,7 +195,7 @@ begin
   inherited Create(TheOwner);
   FVisualOpt := TSGJCBVisual.Create;
   FVisualOpt.OnChange := @OnColorChange;
-  parent := TWinControl(TheOwner);
+
   TabStop := True;
   Height := ScaleX(16, 96);
   Width := 150;
@@ -219,9 +219,9 @@ procedure TSGJCheckbox.KeyDown(var Key: word; Shift: TShiftState);
 begin
   if Enabled then
   begin
-  if (Checked = True) and ((VisualOptions.CheckBoxStyle=RadioButton) or
-                           (VisualOptions.CheckBoxStyle=ToogleRadioButton))
-                           then exit;
+    if (Checked = True) and ((VisualOptions.CheckBoxStyle = RadioButton) or
+      (VisualOptions.CheckBoxStyle = ToogleRadioButton))
+    then exit;
     if Key = 32 then
       if Checked = True then Checked := False
       else
@@ -235,9 +235,9 @@ procedure TSGJCheckbox.Click;
 begin
   if Enabled then
   begin
-    if (Checked = True) and ((VisualOptions.CheckBoxStyle=RadioButton) or
-                             (VisualOptions.CheckBoxStyle=ToogleRadioButton))
-                             then exit;
+    if (Checked = True) and ((VisualOptions.CheckBoxStyle = RadioButton) or
+      (VisualOptions.CheckBoxStyle = ToogleRadioButton))
+    then exit;
     if Checked = True then Checked := False
     else
       Checked := True;
@@ -259,8 +259,6 @@ begin
 end;
 
 procedure TSGJCheckbox.DoEnter();
-var
-  image: TBGRABitmap;
 begin
   inherited DoEnter;
   fGetFocus := True;
@@ -284,10 +282,13 @@ begin
   if FChecked = Value then
     Exit;
   FChecked := Value;
-  if (FVisualOpt.fButtonStyle = ToogleRadioButton) or (FVisualOpt.fButtonStyle = RadioButton)
-  then
-  if FChecked then
-    UncheckOthers;
+  if (FVisualOpt.fButtonStyle = ToogleRadioButton) or
+    (FVisualOpt.fButtonStyle = RadioButton) then
+    if FChecked then
+      UncheckOthers;
+
+  if Assigned(FOnChange) then FOnChange(Self);
+
   Invalidate;
 end;
 
@@ -324,12 +325,12 @@ begin
     for i := 0 to control.ControlCount - 1 do
       if (control.Controls[i] <> Self) and (control.Controls[i] is
         TSGJCheckbox) then
-        if (TSGJCheckbox(control.Controls[i]).VisualOptions.CheckBoxStyle = ToogleRadioButton)
-        or   (TSGJCheckbox(control.Controls[i]).VisualOptions.CheckBoxStyle = RadioButton)
-        then
-        TSGJCheckbox(control.Controls[i]).Checked := False;
+        if (TSGJCheckbox(control.Controls[i]).VisualOptions.CheckBoxStyle =
+          ToogleRadioButton) or (TSGJCheckbox(control.Controls[i]).VisualOptions.CheckBoxStyle = RadioButton) then
+          TSGJCheckbox(control.Controls[i]).Checked := False;
   end;
 end;
+
 procedure TSGJCheckbox.PaintCheckControl();
 var
   image: TBGRABitmap;
@@ -341,87 +342,95 @@ begin
   else
     c_innerColor := FVisualOpt.ColorInner;
 
-  c_OuterColor:= FVisualOpt.ColorOuter;
+  c_OuterColor := FVisualOpt.ColorOuter;
 
   image := TBGRABitmap.Create(Width, Height,
     ColorToBGRA(ColorToRGB(Parent.Brush.Color)));
 
-  image.FontAntialias := true;
+  image.FontAntialias := True;
   image.FontStyle := Font.Style;
   image.FontHeight := abs(GetFontData(Font.Reference.Handle).Height);
   c := ColorToRGB(FVisualOpt.ColorOuter);
 
-  //Checkbox
-  if FVisualOpt.fButtonStyle = Checkbox then
-  begin
-    image.JoinStyle := pjsRound;
-    image.FillroundRectAntialias(height div 5, height div 5, Height - (height div 5), Height - (height div 5), 4, 4, ColorToRGB(c_innerColor));
-    image.RoundRectAntialias(height div 5, height div 5, Height - (height div 5), Height - (height div 5), 4, 4, c, 1);
-
-    if Checked then
+  case FVisualOpt.fButtonStyle of
+    //Checkbox
+    Checkbox:
     begin
-      image.JoinStyle := pjsBevel;
-      image.LineCap := pecSquare;
-      image.PenStyle := psSolid;
+      image.JoinStyle := pjsRound;
+      image.FillroundRectAntialias(Height div 5, Height div 5, Height -
+        (Height div 5), Height - (Height div 5), 4, 4, ColorToRGB(c_innerColor));
+      image.RoundRectAntialias(Height div 5, Height div 5, Height -
+        (Height div 5), Height - (Height div 5), 4, 4, c, 1);
 
-      image.DrawPolyLineAntialias([PointF(Height div 3, Height div 2),
-        PointF(Height div 4 + Height div 5, Height - Height div 3), PointF(Height - Height div 3, Height div 5 + height div 7)], c, 1);
-      image.Draw(Canvas, 0, 0, True);
+      if Checked then
+      begin
+        image.JoinStyle := pjsBevel;
+        image.LineCap := pecSquare;
+        image.PenStyle := psSolid;
+
+        image.DrawPolyLineAntialias([PointF(Height div 3, Height div 2),
+          PointF(Height div 4 + Height div 5, Height - Height div 3),
+          PointF(Height - Height div 3, Height div 5 + Height div 7)], c, 1);
+      end;
+      image.TextOut(Height, Height div 2 - (image.FontHeight div 2),
+        Caption, Font.Color);
     end;
-    image.TextOut(Height, Height div 2 - (image.FontHeight div 2),
-      Caption, Font.Color);
-  end;
-  //Radio
-  if FVisualOpt.fButtonStyle = RadioButton then
-  begin
 
-    image.FillEllipseAntialias(Height div 2, Height div 2, Height div
+    RadioButton:
+    begin
+
+      image.FillEllipseAntialias(Height div 2, Height div 2, Height div
         3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
 
-    image.EllipseAntialias(Height div 2, Height div 2, Height div
-        3, Height div 3, ColorToBGRA(ColorToRGB(c_OuterColor)),1);
-    if Checked then
-    begin
-      image.FillEllipseAntialias(Height div 2, Height div 2, Height div
+      image.EllipseAntialias(Height div 2, Height div 2, Height div
+        3, Height div 3, ColorToBGRA(ColorToRGB(c_OuterColor)), 1);
+      if Checked then
+      begin
+        image.FillEllipseAntialias(Height div 2, Height div 2, Height div
           5, Height div 5, ColorToBGRA(ColorToRGB(c_OuterColor)));
+      end;
+      image.TextOut(Height, Height div 2 - (image.FontHeight div 2),
+        Caption, Font.Color);
     end;
-    image.TextOut(Height, Height div 2 - (image.FontHeight div 2),
-      Caption, Font.Color);
-  end;
 
-  if (FVisualOpt.fButtonStyle = ToogleButton) or (FVisualOpt.fButtonStyle = ToogleRadioButton)then
-  begin
-    //ToogleButton
-
-    if FVisualOpt.fToogleStyle = Default then
+    ToogleButton, ToogleRadioButton:
     begin
-    image.FillRoundRectAntialias(2, 2, Height * 2-(Height div 4), Height - 2, Height div
-       2, Height div 2, c, [rrDefault]);
-       //checked
-       if Checked then
-         image.FillEllipseAntialias(Height + (Height div 3),
-           Height div 2, Height div 3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
-       //unchecked
-       if not Checked then
-         image.FillEllipseAntialias(Height div 2, Height div 2, Height div
-           3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
+      //ToogleButton
+
+      if FVisualOpt.fToogleStyle = Default then
+      begin
+        image.FillRoundRectAntialias(2, 2, Height * 2 - (Height div 4),
+          Height - 2, Height div 2, Height div 2, c, [rrDefault]);
+        //checked
+        if Checked then
+          image.FillEllipseAntialias(Height + (Height div 3),
+            Height div 2, Height div 3, Height div 3,
+            ColorToBGRA(ColorToRGB(c_innerColor)));
+        //unchecked
+        if not Checked then
+          image.FillEllipseAntialias(Height div 2, Height div 2,
+            Height div 3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
+      end;
+      if FVisualOpt.fToogleStyle = Style1 then
+      begin
+        image.RoundRectAntialias(2, 2, Height * 2 - (Height div 4), Height -
+          2, Height div 2, Height div 2, ColorToBGRA(ColorToRGB(c_OuterColor)),
+          1, [rrDefault]);
+        //checked
+        if Checked then
+          image.FillEllipseAntialias(Height + (Height div 3),
+            Height div 2, Height div 3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
+        //unchecked
+        if not Checked then
+          image.FillEllipseAntialias(Height div 2, Height div 2, Height div
+            3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
+      end;
+
+
+      image.TextOut(Height * 2 - (Height div 5) + 2, Height div 2 - (image.FontHeight div 2),
+        Caption, Font.Color);
     end;
-    if FVisualOpt.fToogleStyle = Style1 then
-    begin
-    image.RoundRectAntialias(2, 2, Height * 2-(Height div 4), Height - 2, Height div
-       2, Height div 2,ColorToBGRA(ColorToRGB(c_OuterColor)),1,[rrDefault]);
-    //checked
-    if Checked then
-      image.FillEllipseAntialias(Height + (Height div 3),
-        Height div 2, Height div 3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
-    //unchecked
-    if not Checked then
-      image.FillEllipseAntialias(Height div 2, Height div 2, Height div
-        3, Height div 3, ColorToBGRA(ColorToRGB(c_innerColor)));
- end;
 
-    image.TextOut(Height * 2-(Height div 5)+2, Height div 2 - (image.FontHeight div 2),
-      Caption, Font.Color);
   end;
 
   if fGetFocus = True then
@@ -451,4 +460,5 @@ end;
 initialization
   {$I resources/SGJ.CheckBox.lrs}
 {$ENDIF}
+
 end.
