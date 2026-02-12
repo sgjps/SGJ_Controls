@@ -16,29 +16,33 @@ unit SGJ.Button;
 {$IFDEF FPC}
 {$mode objfpc}{$H+}
 {$ENDIF}
+
 interface
 
 uses
   {$IFDEF FPC}
-  LCLType,LResources,
+  LCLType,LResources, LCLIntf,
   {$ELSE}
-  WINDOWS,
+  Windows,
   {$ENDIF}
   Themes,
-   bgrabitmap, BGRABitmapTypes,
-   Classes, SysUtils, Controls, ExtCtrls, Graphics, Forms, Messages, Types, ImgList;
+  bgrabitmap, BGRABitmapTypes,
+  Classes, SysUtils, Controls, ExtCtrls, Graphics, Forms, Messages, Types, ImgList;
 
 type
   TSGJTextAlignment = (taCenter, taLeftCenter);
   TSGJImagePosition = (ipCenter, ipLeftCenter, ipTopCenter, ipBottomCenter);
 
+  TCustomSGJButton = class;
 
 type
   TButtonArrow = (baNone, baRight, baDown, baUp);
+  TButtonVisualState = (bsNormal, bsHover, bsPressed);
 
 type
   TSGJBtnState = class(TPersistent)
   private
+    fOwner: TCustomSGJButton;
     fColor: TColor;
     fBorderColor: TColor;
     fFont: TFont;
@@ -81,12 +85,20 @@ type
     fHover: TSGJBtnState;
     fClicked: TSGJBtnState;
     fDisabled: TSGJBtnState;
-    fMouseMove: byte;
+    fMouseMove: TButtonVisualState;
     fthemed: boolean;
     fbuttonArrow: TButtonArrow;
+    ButtonState: TSGJBtnState;
+    FIBackground: TBGRABitmap;
+    FLastState: TButtonVisualState;
+    FLastSize: TSize;
     procedure SetSubcaption(AValue: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure PaintButton();
     procedure SetThemed(AValue: boolean);
+    procedure DrawButtonArrow(ACanvas: TCanvas);
+    procedure DrawThemedBackground();
+    procedure DrawBackground();
+    procedure InvalidateBackground;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -98,6 +110,7 @@ type
     property ButtonClicked: TSGJBtnState read fClicked write fClicked;
     property ButtonDisabled: TSGJBtnState read fDisabled write fDisabled;
   protected
+    procedure AdjustSize; override;
     procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
     procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
@@ -130,7 +143,7 @@ type
     property Enabled;
     property AutoSize;
     property BidiMode;
-  //  property BorderSpacing;
+    //  property BorderSpacing;
     property Constraints;
     property DoubleBuffered;
     property DragCursor;
@@ -180,7 +193,7 @@ begin
   fFont := TFont.Create();
   fFontDescription := TFont.Create();
   inherited Create;
-
+  FOwner := TCustomSGJButton(AControl);
 end;
 
 destructor TSGJBtnState.Destroy;
@@ -207,6 +220,7 @@ begin
   if fColor <> AColor then
   begin
     fColor := AColor;
+    if Assigned(FOwner) then FOwner.InvalidateBackground;
   end;
 end;
 
@@ -215,6 +229,7 @@ begin
   if fBorderColor <> AColor then
   begin
     fBorderColor := AColor;
+    if Assigned(FOwner) then FOwner.InvalidateBackground;
   end;
 end;
 
@@ -223,6 +238,7 @@ begin
   if fRoundedCorners <> AChecked then
   begin
     fRoundedCorners := AChecked;
+    if Assigned(FOwner) then FOwner.InvalidateBackground;
   end;
 end;
 
@@ -244,8 +260,8 @@ begin
   begin
     fColor := TSGJBtnState(Source).Color;
     fBorderColor := TSGJBtnState(Source).ColorBorder;
-    fFont := TSGJBtnState(Source).Font;
-    fFontDescription := TSGJBtnState(Source).FontSubCaption;
+    fFont.Assign(TSGJBtnState(Source).Font);
+    fFontDescription.Assign(TSGJBtnState(Source).FontSubCaption);
     fImages := TSGJBtnState(Source).Images;
     fImageIndex := TSGJBtnState(Source).ImageIndex;
     fTextAlignment := TSGJBtnState(Source).TextAlignment;
@@ -259,7 +275,6 @@ end;
 constructor TCustomSGJButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  parent := TWinControl(AOwner);
 
   with GetControlClassDefaultSize do
     SetInitialBounds(0, 0, CX, CY);
@@ -268,15 +283,13 @@ begin
   fHover := TSGJBtnState.Create(self);
   fClicked := TSGJBtnState.Create(self);
   fDisabled := TSGJBtnState.Create(self);
-  BorderStyle := bsNone;
   Height := 32;
-  ParentBackground := False;
-  color := Parent.Brush.Color;
+  ParentBackground := True;
 
-  fNormal.ImageIndex:=-1;
-  fHover.ImageIndex:=-1;
-  fClicked.ImageIndex:=-1;
-  fDisabled.ImageIndex:=-1;
+  fNormal.ImageIndex := -1;
+  fHover.ImageIndex := -1;
+  fClicked.ImageIndex := -1;
+  fDisabled.ImageIndex := -1;
   fNormal.fColor := clSilver;
   fHover.fColor := clGray;
   fClicked.fColor := clMedGray;
@@ -291,10 +304,12 @@ begin
   FreeAndNil(fHover);
   FreeAndNil(fClicked);
   FreeAndNil(fDisabled);
+  FreeAndNil(FIBackground);
   inherited Destroy;
 end;
 
-procedure TCustomSGJButton.SetSubCaption(AValue: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
+procedure TCustomSGJButton.SetSubCaption(AValue:
+  {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
 begin
   if fSubCaption <> AValue then
   begin
@@ -313,8 +328,6 @@ begin
 end;
 
 procedure TCustomSGJButton.DoEnter();
-var
-  image: TBGRABitmap;
 begin
   inherited DoEnter;
   fGetFocus := True;
@@ -331,16 +344,16 @@ end;
 procedure TCustomSGJButton.MouseMove(Shift: TShiftState; X, Y: integer);
 begin
   inherited;
-  fMouseMove := 1;
-  Cursor := crHandPoint;
+  fMouseMove := bsHover;
+  if Cursor <> crHandPoint then Cursor := crHandPoint;
   invalidate;
 end;
 
 procedure TCustomSGJButton.MouseLeave(var Msg: TMessage);
 begin
   inherited;
-  fMouseMove := 0;
-  Cursor := crDefault;
+  fMouseMove := bsNormal;
+  if Cursor <> crDefault then Cursor := crDefault;
   invalidate;
 end;
 
@@ -348,8 +361,8 @@ procedure TCustomSGJButton.MouseDown(Button: TMouseButton; Shift: TShiftState;
   X, Y: integer);
 begin
   inherited;
-  fMouseMove := 2;
-  Cursor := crDefault;
+  fMouseMove := bsPressed;
+  if Cursor <> crDefault then Cursor := crDefault;
   invalidate;
 end;
 
@@ -357,111 +370,127 @@ procedure TCustomSGJButton.MouseUp(Button: TMouseButton; Shift: TShiftState;
   X, Y: integer);
 begin
   inherited;
-  fMouseMove := 1;
-  Cursor := crDefault;
+  fMouseMove := bsHover;
+  if Cursor <> crDefault then Cursor := crDefault;
   invalidate;
 end;
 
 procedure TCustomSGJButton.KeyUp(var Key: word; Shift: TShiftState);
 begin
   inherited;
-  if Key = 32 then
-    fMouseMove := 0;
-  Cursor := crDefault;
+  if Key = VK_SPACE then
+    fMouseMove := bsNormal;
+  if Cursor <> crDefault then Cursor := crDefault;
   invalidate;
 end;
 
 procedure TCustomSGJButton.KeyDown(var Key: word; Shift: TShiftState);
 begin
   inherited;
-  if Key = 32 then
-    fMouseMove := 2;
-  Cursor := crDefault;
+  if Key = VK_SPACE then
+  begin
+    fMouseMove := bsPressed;
+    Click;
+  end;
+  if Cursor <> crDefault then Cursor := crDefault;
   invalidate;
 end;
 
 procedure TCustomSGJButton.Paint();
 begin
-  inherited;
+  inherited Paint;
   if HandleAllocated then
     PaintButton();
 end;
 
-
-procedure TCustomSGJButton.PaintButton();
+procedure TCustomSGJButton.DrawThemedBackground();
 var
-  image: TBGRABitmap;
-  BtnColor: TColor;
-  SubFont: TFont;
-  Rounded: boolean;
-  BorderColor: TColor;
-  ButtonState: TSGJBtnState;
   Details: TThemedElementDetails;
-  ImgRes, SubMargin,
-  ImgWidth,ImgHeight:integer;
-  CaptionHeight:integer;
-  AStyle: TTextStyle;
-  BtnSym: string;
-  R:TRect;
 begin
   case fMouseMove of
-    0: ButtonState := ButtonNormal;
-    1: ButtonState := ButtonHover;
-    2: ButtonState := ButtonClicked;
+    bsNormal: Details := ThemeServices.GetElementDetails(tbPushButtonNormal);
+    bsHover: Details := ThemeServices.GetElementDetails(tbPushButtonHot);
+    bsPressed: Details := ThemeServices.GetElementDetails(tbPushButtonPressed);
   end;
-  if not self.Enabled then ButtonState := ButtonDisabled;
+  if not self.Enabled then
+    Details := ThemeServices.GetElementDetails(tbPushButtonDisabled);
+  ThemeServices.DrawElement(self.canvas.Handle, Details, self.ClientRect);
+end;
 
-  Canvas.Font := ButtonState.Font;
-  Canvas.Font.Size:=ScaleX(ButtonState.Font.Size,96);
-  Canvas.Brush.Color := ButtonState.Color;
-  BtnColor := ButtonState.Color;
-  SubFont := ButtonState.FontSubCaption;
-  CaptionHeight:=Canvas.TextHeight('Ag');
-  {$Region 'Themed Button'}
-  if fThemed then
+procedure TCustomSGJButton.InvalidateBackground;
+begin
+  FreeAndNil(FIBackground);
+  Invalidate;
+end;
+
+procedure TCustomSGJButton.DrawBackground();
+var
+  BtnColor: TColor;
+begin
+  if (FIBackground = nil) or (FLastState <> fMouseMove) or
+    (FLastSize.cx <> Width) or (FLastSize.cy <> Height) then
   begin
-    case fMouseMove of
-      0: Details := ThemeServices.GetElementDetails(tbPushButtonNormal);
-      1: Details := ThemeServices.GetElementDetails(tbPushButtonHot);
-      2: Details := ThemeServices.GetElementDetails(tbPushButtonPressed);
-    end;
-    if not self.Enabled then
-      Details := ThemeServices.GetElementDetails(tbPushButtonDisabled);
-    ThemeServices.DrawElement(self.canvas.Handle, Details, self.ClientRect);
-  end
-  {$EndRegion Themed Button}
-  {$REGION DrawButton}
-  else
-  begin
-    image := TBGRABitmap.Create(Width, Height,
+    BtnColor := ButtonState.Color;
+    FreeAndNil(FIBackground);
+    FIBackground := TBGRABitmap.Create(Width, Height,
       ColorToBGRA(ColorToRGB(Parent.Brush.Color)));
 
     if ButtonState.RoundedCorners then
-      image.FillRoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10,
+      FIBackground.FillRoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10,
         ColorToBGRA(ColorToRGB(BtnColor)))
     else
-      image.FillRect(0, 0, Width, Height, ColorToBGRA(ColorToRGB(BtnColor)));
+      FIBackground.FillRect(0, 0, Width, Height, ColorToBGRA(ColorToRGB(BtnColor)));
 
     if ButtonState.ColorBorder <> clNone then
     begin
       if not ButtonState.RoundedCorners then
-        image.RectangleAntialias(0, 0, Width - 1, Height - 1,
+        FIBackground.RectangleAntialias(0, 0, Width - 1, Height - 1,
           ColorToBGRA(ColorToRGB(ButtonState.ColorBorder)), 1)
       else
-        image.RoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10,
+        FIBackground.RoundRectAntialias(0, 0, Width - 1, Height - 1, 10, 10,
           ColorToBGRA(ColorToRGB(ButtonState.ColorBorder)), 1);
     end;
 
     if fGetFocus = True then
     begin
-      image.JoinStyle := pjsBevel;
-      image.PenStyle := psDot;
-      image.RectangleAntialias(0, 0, Width - 1, Height - 1, ColorToRGB(clwhite), 1);
+      FIBackground.JoinStyle := pjsBevel;
+      FIBackground.PenStyle := psDot;
+      FIBackground.RectangleAntialias(0, 0, Width - 1, Height - 1, ColorToRGB(clwhite), 1);
     end;
 
-    image.Draw(Canvas, 0, 0, True);
-    image.Free;
+    FLastState := fMouseMove;
+    FLastSize.cx := Width;
+    FLastSize.cy := Height;
   end;
+  FIBackground.Draw(Canvas, 0, 0, True);
+end;
+
+procedure TCustomSGJButton.PaintButton();
+var
+  SubFont: TFont;
+  SubMargin, ImgWidth, ImgHeight: integer;
+  CaptionHeight: integer;
+  R, R2: TRect;
+begin
+  case fMouseMove of
+    bsNormal: ButtonState := ButtonNormal;
+    bsHover: ButtonState := ButtonHover;
+    bsPressed: ButtonState := ButtonClicked;
+  end;
+  if not self.Enabled then ButtonState := ButtonDisabled;
+
+  Canvas.Font := ButtonState.Font;
+  Canvas.Font.Size := ScaleX(ButtonState.Font.Size, 96);
+  Canvas.Brush.Color := ButtonState.Color;
+
+  SubFont := ButtonState.FontSubCaption;
+  CaptionHeight := Canvas.TextHeight('Ag');
+  SetBkMode(Canvas.Handle, TRANSPARENT);
+  {$REGION DrawButton}
+  if fThemed then
+    DrawThemedBackground()
+  else
+    DrawBackground();
   {$EndREGION DrawButton}
   SubMargin := round(8 * (Forms.Screen.PixelsPerInch / 96));
   {$REGION Images Support}
@@ -470,291 +499,272 @@ begin
     if (ButtonState.ImageIndex <> -1) and (ButtonState.ImageIndex <
       ButtonState.Images.Count) then
     begin
-      ImgRes := round(ButtonState.Images.Width * (Forms.Screen.PixelsPerInch / 96));
-      ImgWidth:= ButtonState.Images.Resolution[ImgRes].Width;
-      ImgHeight:=ButtonState.Images.Resolution[ImgRes].Height;
+      ImgWidth := ButtonState.Images.Width * Screen.PixelsPerInch div 96;
+      ImgHeight := ButtonState.Images.Height * Screen.PixelsPerInch div 96;
+
+      case ButtonState.ImagePosition of
+        ipLeftCenter: ButtonState.Images.DrawForPPI(Canvas,
+            SubMargin, (Height div 2) - (ImgHeight div 2), ButtonState.ImageIndex,
+            ButtonState.Images.Width,
+            Screen.PixelsPerInch, 1.0, True);
+        ipCenter: ButtonState.Images.DrawForPPI(Canvas, (Width div 2) -
+            (ImgWidth div 2),
+            (Height div 2) - (ImgHeight div 2), ButtonState.ImageIndex,
+            ButtonState.Images.Width,
+            Screen.PixelsPerInch, 1.0, True);
+        ipTopCenter: ButtonState.Images.DrawForPPI(Canvas,
+            (Width div 2) - (ImgWidth div 2),
+            SubMargin, ButtonState.ImageIndex, ButtonState.Images.Width,
+            Screen.PixelsPerInch, 1.0, True);
+        ipBottomCenter: ButtonState.Images.DrawForPPI(Canvas,
+            (Width div 2) - (ImgWidth div 2),
+            Height - ImgHeight - SubMargin, ButtonState.ImageIndex,
+            ButtonState.Images.Width,
+            Screen.PixelsPerInch, 1.0, True);
+      end;
 
       if ButtonState.ImagePosition = ipLeftCenter then
       begin
-        ButtonState.Images.Resolution[ImgRes].Draw(Canvas,
-          SubMargin, (Height div 2) -
-          (ImgHeight div 2),
-          ButtonState.ImageIndex, True);
         //Caption with Images
-        if fthemed then
+        if fSubCaption = '' then
         begin
-          if fSubCaption = '' then
-          ThemeServices.DrawText(self.canvas, Details, Caption,
-                        Rect(ImgWidth + (2*SubMargin),0,Width,Height),
-                        DT_VCENTER or DT_SINGLELINE, 0)
-          else
-          begin
-            ThemeServices.DrawText(self.canvas, Details, Caption,
-              Rect(ImgWidth + (2*SubMargin),
-              (Height div 2) - (Canvas.TextHeight('Ag')) - 1,
-              Canvas.TextWidth(Caption) + ImgWidth + (2*SubMargin),
-              self.Height), 0, 0);
-
-            Canvas.Font := ButtonState.FontSubCaption;
-            Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
-            if Canvas.TextWidth(fSubCaption) < (Width -
-              (ImgWidth + (3*SubMargin))) then
-              ThemeServices.DrawText(self.canvas, Details, fSubCaption,
-                RECT(ImgWidth + (2*SubMargin),
-                (Height div 2) + 1, Canvas.TextWidth(fSubCaption) +
-                ImgWidth + (2*SubMargin),
-                self.Height), 0, 0)
-            else
-              ThemeServices.DrawText(self.canvas, Details, '...',
-                RECT(ImgWidth + (2*SubMargin),
-                (Height div 2) + 1, Canvas.TextWidth(fSubCaption) +
-                ImgWidth + (2*SubMargin),
-                self.Height), 0, 0);
-
-          end;
+          R := Rect(ImgWidth + (2 * SubMargin), 0, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_VCENTER or DT_SINGLELINE);
         end
         else
-        if fSubCaption = '' then
-          Canvas.TextOut(ImgWidth +(2*SubMargin),
-          (Height div 2) - (Canvas.TextHeight('Ag') div 2), Caption)
-        else
         begin
-          Canvas.TextOut(ImgWidth +
-            (2*SubMargin), (Height div 2) - (Canvas.TextHeight('Ag')) - 1, Caption);
+          R := Rect(ImgWidth + (2 * SubMargin), (Height div 2) -
+            (Canvas.TextHeight('Ag')) - 1, Canvas.TextWidth(Caption) +
+            ImgWidth + (2 * SubMargin), self.Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_SINGLELINE);
 
           Canvas.Font := ButtonState.FontSubCaption;
-          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
-          if Canvas.TextWidth(fSubCaption) < (Width -(ImgWidth + (3*SubMargin))) then
-            Canvas.TextOut(ImgWidth +(2*SubMargin), (Height div 2) + 1, fSubCaption)
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size, 96);
+          if Canvas.TextWidth(fSubCaption) <
+            (Width - (ImgWidth + (3 * SubMargin))) then
+          begin
+            R := RECT(ImgWidth + (2 * SubMargin), (Height div 2) +
+              1, Canvas.TextWidth(fSubCaption) + ImgWidth + (2 * SubMargin),
+              self.Height);
+            DrawText(Canvas.Handle, PChar(fSubCaption), Length(fSubCaption), R,
+              0);
+          end
           else
-            Canvas.TextOut(ImgWidth +
-              (2*SubMargin), (Height div 2) + 1, '...');
+          begin
+            R := RECT(ImgWidth + (2 * SubMargin), (Height div 2) +
+              1, Canvas.TextWidth(fSubCaption) + ImgWidth + (2 * SubMargin),
+              self.Height);
+            DrawText(Canvas.Handle, PChar('...'), Length('...'), R,
+              DT_SINGLELINE);
+          end;
         end;
-
-      end;
-      if ButtonState.ImagePosition = ipCenter then
-      begin
-        ButtonState.Images.Resolution[ImgRes].Draw(Canvas,
-          (Width div 2) - (ImgWidth div 2),
-          (Height div 2) - (ImgHeight div 2),
-          ButtonState.ImageIndex, True);
-      end;
+      end
+      else
       //Image Center Top
       if ButtonState.ImagePosition = ipTopCenter then
       begin
-        ButtonState.Images.Resolution[ImgRes].Draw(Canvas,
-          (Width div 2) - (ImgWidth div 2),
-          SubMargin,
-          ButtonState.ImageIndex, True);
-        if fthemed then
-                begin
-                  if fSubCaption = '' then
-                  ThemeServices.DrawText(self.canvas, Details, Caption,
-                      Rect(0,(ImgHeight + SubMargin),Width,Height),
-                      DT_CENTER or DT_SINGLELINE, 0)
-                  else
-                  begin
-                    ThemeServices.DrawText(self.canvas, Details, Caption,
-                      Rect(0,
-                      (ImgHeight + SubMargin),
-                      self.width,
-                      self.Height), DT_CENTER or DT_SINGLELINE, 0);
+        if fSubCaption = '' then
+        begin
+          R := Rect(0, (ImgHeight + SubMargin), Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_CENTER or DT_SINGLELINE);
+        end
+        else
+        begin
+          R := Rect(0, (ImgHeight + SubMargin), self.Width, self.Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_CENTER or DT_SINGLELINE);
 
-                    Canvas.Font := ButtonState.FontSubCaption;
-                    Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
-                    if Canvas.TextWidth(fSubCaption) < (Width - SubMargin) then
-                      ThemeServices.DrawText(self.canvas, Details, fSubCaption,
-                        RECT(0,
-                        (ImgHeight + (2*SubMargin)+CaptionHeight),
-                        self.Width,
-                        self.Height), DT_CENTER or DT_SINGLELINE, 0)
-                    else
-                      ThemeServices.DrawText(self.canvas, Details, '...',
-                        RECT(0,
-                        (ImgHeight + (2*SubMargin)+CaptionHeight),
-
-                        self.Width,
-                        self.Height), DT_CENTER or DT_SINGLELINE, 0);
-
-                  end;
-                end
-                else
-                if fSubCaption = '' then
-                  Canvas.TextOut((Width div 2)-(Canvas.TextWidth(Caption) div 2),
-                  (ImgHeight + SubMargin), Caption)
-                else
-                begin
-                  Canvas.TextOut((Width div 2)-(Canvas.TextWidth(Caption) div 2),
-                  (ImgHeight + SubMargin), Caption);
-
-                  Canvas.Font := ButtonState.FontSubCaption;
-                  Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size,96);
-                  if Canvas.TextWidth(fSubCaption) < (Width -(SubMargin)) then
-                    Canvas.TextOut((Width div 2)-(Canvas.TextWidth(fSubCaption) div 2),
-                    (ImgHeight + (2*SubMargin)+CaptionHeight), fSubCaption)
-                  else
-                    Canvas.TextOut((Width div 2)-(Canvas.TextWidth(fSubCaption) div 2),
-                      (ImgHeight + (2*SubMargin)+CaptionHeight), '...');
-                end;
-
-
-      end;
+          Canvas.Font := ButtonState.FontSubCaption;
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size, 96);
+          if Canvas.TextWidth(fSubCaption) < (Width - SubMargin) then
+          begin
+            R := RECT(0, (ImgHeight + (2 * SubMargin) + CaptionHeight),
+              self.Width, self.Height);
+            DrawText(Canvas.Handle, PChar(fSubCaption), Length(fSubCaption), R,
+              DT_CENTER or DT_SINGLELINE);
+          end
+          else
+          begin
+            R := RECT(0, (ImgHeight + (2 * SubMargin) + CaptionHeight),
+              self.Width, self.Height);
+            DrawText(Canvas.Handle, PChar('...'), Length('...'), R,
+              DT_CENTER or DT_SINGLELINE);
+          end;
+        end;
+      end
+      else
       //Image Center Bottom
       if ButtonState.ImagePosition = ipBottomCenter then
       begin
-        ButtonState.Images.Resolution[ImgRes].Draw(Canvas,
-          (Width div 2) - (ImgWidth div 2),
-          Height - ImgHeight - SubMargin,
-          ButtonState.ImageIndex, True);
-        if fthemed then
-                begin
-                  if fSubCaption = '' then
-                    ThemeServices.DrawText(self.canvas, Details, Caption,
-                      Rect(0,SubMargin,Width,Height),
-                      DT_CENTER or DT_SINGLELINE, 0)
-                  else
-                  begin
-                    ThemeServices.DrawText(self.canvas, Details, Caption,
-                      Rect(0,SubMargin,width,Height),
-                      DT_CENTER or DT_SINGLELINE, 0);
+        if fSubCaption = '' then
+        begin
+          R := Rect(0, SubMargin, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_CENTER or DT_SINGLELINE);
+        end
+        else
+        begin
+          R := Rect(0, SubMargin, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R,
+            DT_CENTER or DT_SINGLELINE);
 
-                    Canvas.Font := ButtonState.FontSubCaption;
-                    if Canvas.TextWidth(fSubCaption) < (Width - SubMargin) then
-                      ThemeServices.DrawText(self.canvas, Details, fSubCaption,
-                        RECT(0,((2*SubMargin)+CaptionHeight),Width,Height),
-                        DT_CENTER or DT_SINGLELINE, 0)
-                    else
-                      ThemeServices.DrawText(self.canvas, Details, '...',
-                        RECT(0,((2*SubMargin)+CaptionHeight),Width,Height),
-                        DT_CENTER or DT_SINGLELINE, 0);
-                  end;
-                end
-                else
-                if fSubCaption = '' then
-                  Canvas.TextOut((Width div 2)-(Canvas.TextWidth(Caption) div 2),
-                  (SubMargin), Caption)
-                else
-                begin
-                  Canvas.TextOut((Width div 2)-(Canvas.TextWidth(Caption) div 2),
-                  SubMargin, Caption);
-
-                  Canvas.Font := ButtonState.FontSubCaption;
-                  if Canvas.TextWidth(fSubCaption) < (Width -(SubMargin)) then
-                    Canvas.TextOut((Width div 2)-(Canvas.TextWidth(fSubCaption) div 2),
-                    ((2*SubMargin)+CaptionHeight), fSubCaption)
-                  else
-                    Canvas.TextOut((Width div 2)-(Canvas.TextWidth(fSubCaption) div 2),
-                      ((2*SubMargin)+CaptionHeight), '...');
-                end;
+          Canvas.Font := ButtonState.FontSubCaption;
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size, 96);
+          if Canvas.TextWidth(fSubCaption) < (Width - SubMargin) then
+          begin
+            R := RECT(0, ((2 * SubMargin) + CaptionHeight), Width, Height);
+            DrawText(Canvas.Handle, PChar(fSubCaption), Length(fSubCaption), R,
+              DT_CENTER or DT_SINGLELINE);
+          end
+          else
+          begin
+            R := RECT(0, ((2 * SubMargin) + CaptionHeight), Width, Height);
+            DrawText(Canvas.Handle, PChar('...'), Length('...'), R,
+              DT_CENTER or DT_SINGLELINE);
+          end;
+        end;
       end;
-
     end;
   end
   {$EndREGION Images Support}
   {$REGION Caption Without Images}
-  {TextAlignment support only buttons without images and without subcaptions}
+  {TextAlignment support only buttons without images}
   else
-  if fthemed then
   begin
     if fSubCaption = '' then
     begin
       case ButtonState.TextAlignment of
-        taCenter: ThemeServices.DrawText(self.canvas, Details, Caption,
-            Rect(0,0,Width, Height),
-            DT_VCENTER or DT_CENTER or DT_SINGLELINE, 0);
-
-        taLeftCenter: ThemeServices.DrawText(self.canvas,
-                Details, Caption, Rect(SubMargin, 0, Width, Height),
-                DT_VCENTER or DT_SINGLELINE, 0)
+        taCenter: begin
+          R := Rect(0, 0, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption),
+            R, DT_VCENTER or DT_CENTER or DT_SINGLELINE);
+        end;
+        taLeftCenter: begin
+          R := Rect(SubMargin, 0, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption),
+            R, DT_VCENTER or DT_SINGLELINE);
+        end;
       end;
     end
     else
     begin
       case ButtonState.TextAlignment of
         taCenter: begin
-          ThemeServices.DrawText(self.canvas, Details, Caption,
-            Rect(0,(Height div 2) - (Canvas.TextHeight('Ag')) -1,width, Height),
-                           DT_CENTER or DT_SINGLELINE, 0);
+          R := Rect(0, (Height div 2) - (Canvas.TextHeight('Ag')) - 1, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption),
+            R, DT_CENTER or DT_SINGLELINE);
           Canvas.Font := ButtonState.FontSubCaption;
-          ThemeServices.DrawText(self.canvas, Details, fSubCaption,
-            Rect(0, (Height div 2) + 1,
-            self.width, self.Height), DT_CENTER or DT_SINGLELINE, 0);
-                   end;
-        taLeftCenter: begin
-              ThemeServices.DrawText(self.canvas, Details, Caption,
-              Rect(SubMargin, (Height div 2) - (Canvas.TextHeight('Ag')) -
-        1, Width, Height), 0, 0);
-      Canvas.Font := ButtonState.FontSubCaption;
-      ThemeServices.DrawText(self.canvas, Details, fSubCaption,
-        Rect(SubMargin, (Height div 2) + 1, Width, Height), 0, 0);
-                  end;
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size, 96);
+          R := Rect(0, (Height div 2) + 1, self.Width, self.Height);
+          DrawText(Canvas.Handle, PChar(fSubCaption), Length(fSubCaption),
+            R, DT_CENTER or DT_SINGLELINE);
         end;
-    end;
-  end
-  else
-  if fSubCaption = '' then
-  begin
-    case ButtonState.TextAlignment of
-      taCenter: Canvas.TextOut(Width div 2 - Canvas.TextWidth(Caption) div
-          2, (Height div 2) - (Canvas.TextHeight('Ag') div 2), Caption);
-      taLeftCenter: Canvas.TextOut(SubMargin, (Height div 2) -
-          (Canvas.TextHeight('Ag') div 2), Caption);
-    end;
-  end
-  else
-  begin
-    case ButtonState.TextAlignment of
-         taLeftCenter: begin
-           Canvas.TextOut(SubMargin,
-                         (Height div 2) - (Canvas.TextHeight('Ag')) - 1, Caption);
-           Canvas.Font := ButtonState.FontSubCaption;
-           Canvas.TextOut(SubMargin, (Height div 2) + 1, fSubCaption);
-                   end;
-         taCenter: begin
-                       Canvas.TextOut(Width div 2 - Canvas.TextWidth(Caption) div 2,
-                       (Height div 2) - (Canvas.TextHeight(Caption)) - 1, Caption);
-                       Canvas.Font := ButtonState.FontSubCaption;
-                       Canvas.TextOut(Width div 2 - Canvas.TextWidth(fSubCaption) div 2,
-                       (Height div 2) + 1, fSubCaption);
-                       end;
+        taLeftCenter: begin
+          R := Rect(SubMargin, (Height div 2) - (Canvas.TextHeight('Ag')) -
+            1, Width, Height);
+          DrawText(Canvas.Handle, PChar(Caption), Length(Caption), R, DT_SINGLELINE);
+          Canvas.Font := ButtonState.FontSubCaption;
+          Canvas.Font.Size := ScaleX(ButtonState.FontSubCaption.Size, 96);
+          R := Rect(SubMargin, (Height div 2) + 1, Width, Height);
+          DrawText(Canvas.Handle, PChar(fSubCaption), Length(fSubCaption),
+            R, DT_SINGLELINE);
+        end;
+      end;
     end;
   end;
   {$EndREGION Caption Without Images}
 
-  if fButtonArrow<>baNone then
-  begin
-      AStyle := Canvas.TextStyle;
-      AStyle.Alignment := TAlignment.taRightJustify;
-      AStyle.Layout := tlCenter;
-      AStyle.ShowPrefix := True;
-
-      {$ifdef msWindows}
-      if Win32MajorVersion=10 then
-      begin
-      if Win32BuildNumber>=2200 then
-      Canvas.Font.Name := 'Segoe Fluent Icons'
-      else
-      Canvas.Font.Name := 'Segoe MDL2 Assets';
-      Case fButtonArrow of
-          baRight: BtnSym := WideChar($E970);
-          baDown: BtnSym := WideChar($E96E);
-          baUp: BtnSym := WideChar($E96D);
-      end;
-      end
-      else
-      {$Endif}
-      Case fButtonArrow of
-          baRight: BtnSym := '>';
-          baDown: BtnSym := '˅';
-          baUp: BtnSym := '˄';
-      end;
-
-      R:=self.ClientRect;
-      R.Width:=R.Width-5;
-      Canvas.Font.Color:=ButtonState.fFont.Color;
-      Canvas.TextRect(R, 0, 0, BtnSym, AStyle);
-  end;
+  if fButtonArrow <> baNone then
+    DrawButtonArrow(Canvas);
 end;
+
+procedure TCustomSGJButton.DrawButtonArrow(ACanvas: TCanvas);
+var
+  OldFont: TFont;
+  AStyle: TTextStyle;
+  BtnSym: string;
+  R: TRect;
+begin
+  // zapamiętujemy czcionkę
+  OldFont := TFont.Create;
+  OldFont.Assign(ACanvas.Font);
+
+  // ustawienia stylu tekstu
+  AStyle := ACanvas.TextStyle;
+  AStyle.Alignment := taRightJustify;
+  AStyle.Layout := tlCenter;
+  AStyle.ShowPrefix := True;
+
+  // wybór symbolu
+  {$ifdef msWindows}
+  if Win32MajorVersion = 10 then
+  begin
+    if Win32BuildNumber >= 2200 then
+      ACanvas.Font.Name := 'Segoe Fluent Icons'
+    else
+      ACanvas.Font.Name := 'Segoe MDL2 Assets';
+
+    case fButtonArrow of
+      baRight: BtnSym := widechar($E970);
+      baDown: BtnSym := widechar($E96E);
+      baUp: BtnSym := widechar($E96D);
+    end;
+  end
+  else
+  {$endif}
+  begin
+    case fButtonArrow of
+      baRight: BtnSym := '>';
+      baDown: BtnSym := '˅';
+      baUp: BtnSym := '˄';
+    end;
+  end;
+
+  ACanvas.Font.Size := ScaleX(8, 96);
+  ACanvas.Font.Color := ButtonState.Font.Color;
+
+  R := ClientRect;
+  R.Right := R.Right - 5;
+
+  ACanvas.TextRect(R, 0, 0, BtnSym, AStyle);
+
+  ACanvas.Font.Assign(OldFont);
+  OldFont.Free;
+end;
+
+
+procedure TCustomSGJButton.AdjustSize;
+var
+  TextWidth, TextHeight: integer;
+  iWidth: integer = 0;
+  IHeight: integer = 0;
+begin
+  if not HandleAllocated then Exit;
+  if (fNormal.fImages <> nil) and (fNormal.fImageIndex >= 0) and
+    (fNormal.fImageIndex < fNormal.fImages.Count) then
+  begin
+    iWidth := fNormal.fImages.Width * Screen.PixelsPerInch div 96;
+    iHeight := fNormal.fImages.Height * Screen.PixelsPerInch div 96;
+  end;
+  Canvas.Font.Assign(fNormal.Font);
+  TextWidth := Canvas.TextWidth(Caption);
+  TextHeight := Canvas.TextHeight(Caption);
+  if fSubCaption <> '' then
+  begin
+    if Canvas.TextWidth(fSubCaption) > TextWidth then
+      TextWidth := Canvas.TextWidth(fSubCaption);
+    TextHeight := TextHeight + Canvas.TextHeight(fSubCaption);
+  end;
+  if TextHeight < iHeight then TextHeight := iHeight;
+  // Add padding for button borders
+  if Autosize then
+    SetBounds(Left, Top, TextWidth + 20 + iWidth, TextHeight + 10);
+
+end;
+
 {$IFDEF FPC}
 initialization
   {$I resources/SGJ.Button.lrs}
