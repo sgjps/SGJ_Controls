@@ -11,58 +11,7 @@ version   : 2.0
 This file is part of SGJ Controls for Lazarus
 
 ====================================================================
-
-Set icon on Unix/linux example:
-
-var
-  i:integer;
-  Node:string;
-begin
-
-  for i:=0 to SGJShellTreeView1.Items.Count-1 do
-  begin
-    if SGJShellTreeView1.Items[i].Text=RS_SGJShellTreeView_ThisPC then
-    begin
-    SGJShellTreeView1.Items[i].imageindex:=0;
-    SGJShellTreeView1.Items[i].selectedindex:=0;
-    end;
-    if SGJShellTreeView1.Items[i].Text=RS_SGJShellTreeView_Desktop then
-    begin
-        SGJShellTreeView1.Items[i].imageindex:=0;
-        SGJShellTreeView1.Items[i].selectedindex:=0;
-    end;
-    if SGJShellTreeView1.Items[i].Text=RS_SGJShellTreeView_Download then
-    begin
-        SGJShellTreeView1.Items[i].imageindex:=0;
-        SGJShellTreeView1.Items[i].selectedindex:=0;
-    end;
-    if SGJShellTreeView1.Items[i].Text=RS_SGJShellTreeView_Pictures then
-    begin
-        SGJShellTreeView1.Items[i].imageindex:=0;
-        SGJShellTreeView1.Items[i].selectedindex:=0;
-    end;
-    if SGJShellTreeView1.Items[i].Text=RS_SGJShellTreeView_Documents then
-    begin
-        SGJShellTreeView1.Items[i].imageindex:=0;
-        SGJShellTreeView1.Items[i].selectedindex:=0;
-    end;
-    if SGJShellTreeView1.Items[i].Text='/' then
-    begin
-        SGJShellTreeView1.Items[i].imageindex:=1;
-        SGJShellTreeView1.Items[i].selectedindex:=1;
-    end;
-    SGJShellTreeView1.FolderIcon:=1;
-    SGJShellTreeView1.FolderSelectedIcon:=1;
-  end;
-
-
-
-
 }
-
-
-
-
 
 unit SGJ.ShellTreeView;
 
@@ -245,8 +194,9 @@ begin
 end;
 procedure TSGJShellTreeView.Expand(Node: TTreeNode);
 begin
-    if Node.Count = 0 then
+    if Node.Count = 0 then begin
     LoadFoldersToNode(self, Node);
+    end;
     inherited;
 end;
 procedure TSGJShellTreeView.GetSelectedIndex(Node: TTreeNode);
@@ -261,8 +211,6 @@ begin
   {$ENDIF}
    OpenNodeByPath(self,AValue,'\');
 end;
-
-
 
 procedure TSGJShellTreeView.OpenNodeByPath(TreeView: TTreeView; const Path: string; Separator: Char = '\');
 var
@@ -364,9 +312,9 @@ begin
        if drvtype <> 0 then case drvtype of
              DRIVE_FIXED: result:=RS_SGJShellTreeView_LocalDisk+' ('+Drive+')';
              DRIVE_CDROM: result:=RS_SGJShellTreeView_CD+' ('+Drive+')';
-             DRIVE_REMOVABLE:  result:=RS_SGJShellTreeView_Remote+' ('+Drive+')';
-             DRIVE_REMOTE:    result:=RS_SGJShellTreeView_Ramdisk+' ('+Drive+')';
-             DRIVE_RAMDISK:   result:=RS_SGJShellTreeView_Removable+' ('+Drive+')';
+             DRIVE_REMOVABLE:  result:=RS_SGJShellTreeView_Removable+' ('+Drive+')';
+             DRIVE_REMOTE:    result:=RS_SGJShellTreeView_Remote+' ('+Drive+')';
+             DRIVE_RAMDISK:   result:=RS_SGJShellTreeView_Ramdisk+' ('+Drive+')';
 
      // result:=GetVolumeName(drive);
      end;
@@ -408,7 +356,6 @@ begin
         LoadIcons(ADrive,fIconsList);
         dnode.ImageIndex:=fIconsList.Count-1;
         dnode.SelectedIndex:=fIconsList.Count-1;
-
       end;
     end;
     {$ENDIF}
@@ -520,7 +467,6 @@ begin
   finally
      SL.Free;
   end;
-
 end;
 
 Constructor TSGJShellTreeView.Create(AOwner : TComponent);
@@ -552,7 +498,7 @@ begin
   CreateOsDirsNode(RS_SGJShellTreeView_Download, 'XDG_DOWNLOAD_DIR');
   CreateOsDirsNode(RS_SGJShellTreeView_Pictures, 'XDG_PICTURES_DIR');
   CreateOsDirsNode(RS_SGJShellTreeView_Music, 'XDG_MUSIC_DIR');
-  CreateOsDirsNode(RS_SGJShellTreeView_Videos, 'XDG_VIDEOS_DIR'); 
+  CreateOsDirsNode(RS_SGJShellTreeView_Videos, 'XDG_VIDEOS_DIR');
   // XDG_TEMPLATES_DIR, XDG_PUBLICSHARE_DIR,
   {$ENDIF}
 
@@ -573,5 +519,3 @@ initialization
   {$I resources/SGJ.ShellTreeView.lrs}
 {$ENDIF}
 end.
-
-
