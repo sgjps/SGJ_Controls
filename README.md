@@ -15,13 +15,13 @@ TSGJButton - Button with image. [Lazarus]
               
 TSGJCheckbox - Checkbox | RadioButton | ToggleButton | ToggleRadioButton [Lazarus]
 
-TSGJShellTreeView - Directory TreeView [Lazarus]
+TSGJShellTreeView - [Test/Unstable] Directory TreeView [Lazarus]
 
 TSGJCalendarView - Calendar control for Lazarus.
 
 TSGJExpandPanel - Panel with header and collapsed area for Lazarus.
 
-TSGJListView - ListView for Lazarus with Tile and Groups support on Windows. Compatible with other platforms[tile and groups are ignored] [Lazarus]
+TSGJListView - [Test/Unstable] ListView for Lazarus with Tile and Groups support on Windows. Compatible with other platforms[tile and groups are ignored] [Lazarus]
 
 TWin32Menu - Component for Lazarus. Replaces TMainMenu and TPopupMenu with native Windows Menus. 
 
