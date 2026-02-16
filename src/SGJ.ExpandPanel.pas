@@ -1,3 +1,10 @@
+{
+This file is part of SGJ Controls for Delphi and Lazarus     
+home page : https://www.hiperapps.com 
+email     : sgj@sgjps.com  
+
+date      : 2026/02/16
+}
 unit SGJ.ExpandPanel;
 
 {$mode ObjFPC}{$H+}
@@ -22,12 +29,12 @@ type
     property ShowHint;
   end;
 
-Type
+type
   TSGJEPClientArea = class(TPersistent)
   private
-    fBackground:TColor;
-    fBorder:TColor;
-    frounderdCorners:boolean;
+    fBackground: TColor;
+    fBorder: TColor;
+    frounderdCorners: boolean;
     procedure SetBackground(AValue: TColor);
   public
     constructor Create(AControl: TControl); virtual;
@@ -46,28 +53,27 @@ type
     fCollapsed: boolean;
 
     fAnimTimer: TTimer;
-    fAnimTarget: Integer;
-    fAnimStep: Integer;
+    fAnimTarget: integer;
+    fAnimStep: integer;
     procedure AnimTimerTick(Sender: TObject);
-    procedure StartAnimation(TargetHeight: Integer);
+    procedure StartAnimation(TargetHeight: integer);
 
     procedure SetCollapsed(AValue: boolean);
     procedure HeaderClick(Sender: TObject);
-    procedure HeaderKeyDown(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
-    procedure SetHeight(AValue: integer);
+    procedure HeaderKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   protected
     procedure Loaded; override;
     procedure Paint; override;
+    procedure Resize; override;
   published
     property HeaderButton: THeaderSGJButton read fHeaderButton;
-    property ClientArea: TSGJEPClientArea read fClientAreaSettings write fClientAreaSettings;
-    property ExpandedHeight: integer read fHeight write SetHeight;
+    property ClientArea: TSGJEPClientArea read fClientAreaSettings
+      write fClientAreaSettings;
     property Collapsed: boolean read fCollapsed write SetCollapsed;
-   // property BorderStyle;
+    // property BorderStyle;
     property Font;
     property OnClick;
     property Color;
@@ -124,14 +130,15 @@ end;
 
 procedure TSGJEPClientArea.SetBackground(AValue: TColor);
 begin
-  if fBackground<>AValue then
-  fBackground:=AValue;
+  if fBackground <> AValue then
+    fBackground := AValue;
 end;
 
 constructor TSGJEPClientArea.Create(AControl: TControl);
 begin
   inherited Create;
 end;
+
 constructor TSGJExpandPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -143,68 +150,56 @@ begin
   BorderStyle := bsNone;
   Height := 100;
   Width := 100;
-  ParentBackground := false;
+  ParentBackground := True;
   color := clDefault;
-  ChildSizing.VerticalSpacing:=3;
+  ChildSizing.VerticalSpacing := 3;
 
-  ControlStyle := ControlStyle +[csAcceptsControls];
+  ControlStyle := ControlStyle + [csAcceptsControls];
 
   fHeaderButton := THeaderSGJButton.Create(self);
   fHeaderButton.Parent := self;
   fHeaderButton.SetSubComponent(True);
   fHeaderButton.Align := alTop;
   fHeaderButton.ControlStyle :=
-  fHeaderButton.ControlStyle - [csNoDesignSelectable]+ [csAcceptsControls];
+    fHeaderButton.ControlStyle - [csNoDesignSelectable] + [csAcceptsControls];
   fHeaderButton.OnClick := @HeaderClick;
-  fHeaderButton.OnKeyDown:=@HeaderKeyDown;
+  fHeaderButton.OnKeyDown := @HeaderKeyDown;
 
-  fClientAreaSettings:= TSGJEPClientArea.Create(self);
-  fClientAreaSettings.Background:=clDefault;
-  fClientAreaSettings.BorderColor:=clDefault;
+  fClientAreaSettings := TSGJEPClientArea.Create(self);
+  fClientAreaSettings.Background := clDefault;
+  fClientAreaSettings.BorderColor := clDefault;
 
-  fHeight := 200;
-  fHeaderButton.ButtonArrow:=baDown;
+  fHeaderButton.ButtonArrow := baDown;
 
   fAnimTimer := TTimer.Create(Self);
-fAnimTimer.Enabled := False;
-fAnimTimer.Interval := 10;
-fAnimTimer.OnTimer := @AnimTimerTick;
+  fAnimTimer.Enabled := False;
+  fAnimTimer.Interval := 10;
+  fAnimTimer.OnTimer := @AnimTimerTick;
 
 end;
 
 destructor TSGJExpandPanel.Destroy;
 begin
   fHeaderButton.Free;
-  fClientAreaSettings.free;
+  fClientAreaSettings.Free;
   inherited;
 end;
 
-procedure TSGJExpandPanel.SetHeight(AValue: integer);
-begin
-  if fHeight = AValue then
-    Exit;
-  fHeight := AValue;
-  if not fCollapsed then
-    Height := fHeight;
-end;
-
-
-procedure TSGJExpandPanel.HeaderKeyDown(Sender: TObject; var Key: Word;
+procedure TSGJExpandPanel.HeaderKeyDown(Sender: TObject; var Key: word;
   Shift: TShiftState);
 begin
   if (Key = VK_SPACE) then
   begin
-  if Height > fHeaderButton.Height then
-  begin
-    Height := fHeaderButton.Height;
-    fHeaderButton.ButtonArrow:=baDown;
-  end
-  else
-  begin
-    Height := fHeight;
-    fHeaderButton.ButtonArrow:=baUp;
-  end;
-
+    if Height > fHeaderButton.Height then
+    begin
+      Height := fHeaderButton.Height;
+      fHeaderButton.ButtonArrow := baDown;
+    end
+    else
+    begin
+      Height := fHeight;
+      fHeaderButton.ButtonArrow := baUp;
+    end;
   end;
 end;
 
@@ -214,34 +209,44 @@ begin
 end;
 
 procedure TSGJExpandPanel.Loaded;
-var
-  i: integer;
 begin
   inherited;
-  if Parent <> nil then Color := Parent.Brush.Color;
-  ExpandedHeight:=ScaleX(ExpandedHeight,96);
-  if not (csDesigning in ComponentState) then SetCollapsed(fCollapsed);
+  fHeight := Height;
 
+  if csDesigning in ComponentState then
+    Exit;
+
+  if fCollapsed then
+    Height := fHeaderButton.Height
+  else
+    Height := fHeight;
 end;
+
+
+
+
 
 procedure TSGJExpandPanel.Paint;
 begin
   inherited;
-  Canvas.Pen.Color:=ClientArea.BorderColor;
-  Canvas.Brush.Color:=ClientArea.Background;
+  Canvas.Pen.Color := ClientArea.BorderColor;
+  Canvas.Brush.Color := ClientArea.Background;
   if ClientArea.RoundedCorners then
-  Canvas.RoundRect(0,fHeaderButton.Height+3,Width,height,10,10)
+    Canvas.RoundRect(0, fHeaderButton.Height + 3, Width, Height, 10, 10)
   else
-  Canvas.Rectangle(0,fHeaderButton.Height+3,Width,height);
+    Canvas.Rectangle(0, fHeaderButton.Height + 3, Width, Height);
 end;
 
 procedure TSGJExpandPanel.SetCollapsed(AValue: boolean);
 begin
-  if fCollapsed = AValue then
-    Exit;
-
+  if fCollapsed = AValue then Exit;
   fCollapsed := AValue;
 
+  // DESIGN TIME: do NOT collapse visually
+  if csDesigning in ComponentState then
+    Exit;
+
+  // RUNTIME: collapse/expand with animation
   if fCollapsed then
   begin
     StartAnimation(fHeaderButton.Height);
@@ -252,17 +257,18 @@ begin
     StartAnimation(fHeight);
     fHeaderButton.ButtonArrow := baUp;
   end;
-
 end;
+
+
 
 procedure TSGJExpandPanel.AnimTimerTick(Sender: TObject);
 var
-  NewHeight: Integer;
+  NewHeight: integer;
 begin
   NewHeight := Height + fAnimStep;
 
   if ((fAnimStep > 0) and (NewHeight >= fAnimTarget)) or
-     ((fAnimStep < 0) and (NewHeight <= fAnimTarget)) then
+    ((fAnimStep < 0) and (NewHeight <= fAnimTarget)) then
   begin
     Height := fAnimTarget;
     fAnimTimer.Enabled := False;
@@ -272,7 +278,7 @@ begin
   Height := NewHeight;
 end;
 
-procedure TSGJExpandPanel.StartAnimation(TargetHeight: Integer);
+procedure TSGJExpandPanel.StartAnimation(TargetHeight: integer);
 begin
   fAnimTarget := TargetHeight;
 
@@ -284,9 +290,16 @@ begin
   fAnimTimer.Enabled := True;
 end;
 
+procedure TSGJExpandPanel.Resize;
+begin
+  inherited Resize;
+  if not fCollapsed then
+    fHeight := Height;
+end;
 
 {$IFDEF FPC}
 initialization
   {$I resources/SGJ.ExpandPanel.lrs}
 {$ENDIF}
+
 end.
