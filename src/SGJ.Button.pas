@@ -166,6 +166,9 @@ type
     property OnEndDrag;
     property OnEnter;
     property OnExit;
+    property OnKeyDown;
+    property OnKeyUp;
+    property OnKeyPress;
     property OnMouseDown;
     property OnMouseEnter;
     property OnMouseLeave;
@@ -386,7 +389,7 @@ end;
 
 procedure TCustomSGJButton.KeyDown(var Key: word; Shift: TShiftState);
 begin
-  inherited;
+  inherited KeyDown(Key, Shift);
   if Key = VK_SPACE then
   begin
     fMouseMove := bsPressed;

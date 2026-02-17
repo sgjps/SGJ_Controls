@@ -17,6 +17,8 @@ uses
 
 type
   THeaderSGJButton = class(TCustomSGJButton)
+    protected
+      procedure KeyDown(var Key: word; Shift: TShiftState); override;
   published
     property ButtonArrow;
     property ButtonNormal;
@@ -51,16 +53,13 @@ type
     fClientAreaSettings: TSGJEPClientArea;
     fHeight: integer;
     fCollapsed: boolean;
-
     fAnimTimer: TTimer;
     fAnimTarget: integer;
     fAnimStep: integer;
     procedure AnimTimerTick(Sender: TObject);
     procedure StartAnimation(TargetHeight: integer);
-
     procedure SetCollapsed(AValue: boolean);
     procedure HeaderClick(Sender: TObject);
-    procedure HeaderKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -139,6 +138,16 @@ begin
   inherited Create;
 end;
 
+procedure THeaderSGJButton.KeyDown(var Key: word; Shift: TShiftState);
+begin
+  if Key = VK_SPACE then
+  begin
+    TSGJExpandPanel(Parent).Collapsed := not TSGJExpandPanel(Parent).Collapsed;
+    Exit;
+  end;
+    inherited KeyDown(Key, Shift);
+end;
+
 constructor TSGJExpandPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -161,9 +170,8 @@ begin
   fHeaderButton.SetSubComponent(True);
   fHeaderButton.Align := alTop;
   fHeaderButton.ControlStyle :=
-    fHeaderButton.ControlStyle - [csNoDesignSelectable] + [csAcceptsControls];
+  fHeaderButton.ControlStyle - [csNoDesignSelectable] + [csAcceptsControls];
   fHeaderButton.OnClick := @HeaderClick;
-  fHeaderButton.OnKeyDown := @HeaderKeyDown;
 
   fClientAreaSettings := TSGJEPClientArea.Create(self);
   fClientAreaSettings.Background := clDefault;
@@ -183,24 +191,6 @@ begin
   fHeaderButton.Free;
   fClientAreaSettings.Free;
   inherited;
-end;
-
-procedure TSGJExpandPanel.HeaderKeyDown(Sender: TObject; var Key: word;
-  Shift: TShiftState);
-begin
-  if (Key = VK_SPACE) then
-  begin
-    if Height > fHeaderButton.Height then
-    begin
-      Height := fHeaderButton.Height;
-      fHeaderButton.ButtonArrow := baDown;
-    end
-    else
-    begin
-      Height := fHeight;
-      fHeaderButton.ButtonArrow := baUp;
-    end;
-  end;
 end;
 
 procedure TSGJExpandPanel.HeaderClick(Sender: TObject);
