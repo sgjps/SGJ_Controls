@@ -19,7 +19,7 @@ interface
 uses
   {$IFDEF LCLGTK2} Gtk2, Gtk2Def, {$ENDIF}
   LCLType, LCLIntf, LResources, Classes, Buttons, SysUtils, Grids, Controls,
-  DateUtils, StdCtrls, ExtCtrls, Dialogs,
+  DateUtils, StdCtrls, ExtCtrls, Dialogs, Math,
   Graphics, SGJ.SimpleButton;
 
 type
@@ -165,30 +165,42 @@ begin
 end;
 
 procedure DrawArrowUp(C: TCanvas; X, Y, Size: integer);
+var
+  W, H: integer;
 begin
-  C.Pen.Width := 2;
-  // Left stroke
-  C.MoveTo(X - Size, Y + Size);
-  C.LineTo(X, Y - Size);
+  Size := ScaleX(Size, 96);
 
-  // Right stroke
-  C.MoveTo(X + Size, Y + Size);
-  C.LineTo(X, Y - Size);
+  W := Size;
+
+  H := Size div 2;
+
+  C.Pen.Width := Max(1, ScaleX(2, 96));
+
+  C.MoveTo(X - W, Y + H);
+  C.LineTo(X,     Y - H);
+
+  C.MoveTo(X + W, Y + H);
+  C.LineTo(X,     Y - H);
 end;
 
 
 procedure DrawArrowDown(C: TCanvas; X, Y, Size: integer);
+var
+  W, H: integer;
 begin
-  C.Pen.Width := 2;
-  // Left stroke
-  C.MoveTo(X - Size, Y - Size);
-  C.LineTo(X, Y + Size);
+  Size := ScaleX(Size, 96);
 
-  // Right stroke
-  C.MoveTo(X + Size, Y - Size);
-  C.LineTo(X, Y + Size);
+  W := Size;
+  H := Size div 2;
+
+  C.Pen.Width := Max(1, ScaleX(2, 96));
+
+  C.MoveTo(X - W, Y - H);
+  C.LineTo(X,     Y + H);
+
+  C.MoveTo(X + W, Y - H);
+  C.LineTo(X,     Y + H);
 end;
-
 constructor TCalendarButton.Create(AOwner: TSGJCalendarView);
 begin
   inherited Create(AOwner);
@@ -499,7 +511,6 @@ procedure TSGJCalendarView.PaintBtnText(Sender: TObject);
 var
   AStyle: TTextStyle;
 begin
-
   AStyle := TCalendarButton(Sender).Canvas.TextStyle;
   AStyle.Alignment := TAlignment.taCenter;
   AStyle.Layout := tlCenter;
@@ -511,47 +522,13 @@ begin
       4, 0, TCalendarButton(Sender).Caption, AStyle);
   end;
   TCalendarButton(Sender).Canvas.Pen.Style:=psSolid;
-  //On Windows 8+ button arrows is painted from fonts
-  if TCalendarButton(Sender).Tag > 0 then
-  begin
-    {$ifdef msWindows}
-    if Win32MajorVersion = 10 then
-    begin
-      if Win32BuildNumber >= 2200 then
-        TCalendarButton(Sender).Canvas.Font.Name := 'Segoe Fluent Icons'
-      else
-        TCalendarButton(Sender).Canvas.Font.Name := 'Segoe MDL2 Assets';
 
-      fUp.Caption := widechar($E010);
-      fDown.Caption := widechar($E011);
-    end
-    else
-    if (Win32MajorVersion = 6) and (Win32MinorVersion in [2, 3]) then
-    begin
-      TCalendarButton(Sender).Canvas.Font.Name := 'Segoe UI Symbol';
-      fUp.Caption := widechar($E098);
-      fDown.Caption := widechar($E099);
-    end;
-
-    if (Win32MajorVersion = 10) or ((Win32MajorVersion = 6) and
-      (Win32MinorVersion in [2, 3])) then
-    begin
-      case TCalendarButton(Sender).Tag of
-        1: TCalendarButton(Sender).Canvas.TextRect(TCalendarButton(Sender).ClientRect,
-            0, 0, fUp.Caption, AStyle);
-        2: TCalendarButton(Sender).Canvas.TextRect(TCalendarButton(Sender).ClientRect,
-            0, 0, fDown.Caption, AStyle);
-      end;
-    end
-    else
-    {$Endif}//Draw Arrow
       case TCalendarButton(Sender).Tag of
         1: DrawArrowUp(TCalendarButton(Sender).Canvas, TCalendarButton(Sender).Width div
             2, TSpeedButton(Sender).Height div 2, ScaleX(6, 96));
         2: DrawArrowDown(TCalendarButton(Sender).Canvas, TCalendarButton(Sender).Width div
             2, TCalendarButton(Sender).Height div 2, ScaleX(6, 96));
       end;
-  end;
 end;
 
 procedure TSGJCalendarView.BtnKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
@@ -634,7 +611,6 @@ begin
   fBtnLeft.Invalidate;
 end;
 
-//Calendar control - Custom StringGrid
 procedure TSGJCalendarV.Init;
 begin
   DecodeDate(Date, Year, Month, Day);
@@ -675,7 +651,7 @@ begin
   Result := inherited SelectCell(ACol, ARow);
   FDrawFocus := True;
 end;
-//DblClick -> SetDate
+
 procedure TSGJCalendarV.DblClick;
 begin
   if fViewStyle = cvsDays then
@@ -707,7 +683,6 @@ begin
             Year := Year + 1;
             Month := 1;
           end;
-        //set date moved to DblClick
       end;
 
     cvsMonths: begin
@@ -749,7 +724,6 @@ var
   C: integer = 4;
 begin
   inherited Resize;
-  //Resize column to fit  grid size
   if fViewStyle = cvsDays then C := 7;
 
   DefaultColWidth := (Width div C);

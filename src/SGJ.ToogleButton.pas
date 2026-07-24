@@ -591,5 +591,5 @@ begin
 end;
 {$IFDEF FPC}
 initialization
-  {$I SGJ.ToogleButton.lrs}
+  //{$I SGJ.ToogleButton.lrs}
 {$ENDIF}end.

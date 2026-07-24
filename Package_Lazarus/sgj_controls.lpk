@@ -23,7 +23,7 @@
         </Debugging>
       </Linking>
     </CompilerOptions>
-    <Version Major="2" Release="2602"/>
+    <Version Major="2" Minor="1" Release="2607"/>
     <Files>
       <Item>
         <Filename Value="..\src\SGJ.LinkLabel.pas"/>
@@ -90,8 +90,36 @@
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.ExpandPanel"/>
       </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ToogleButton.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ToogleButton"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.ShellListView.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.ShellListView"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\sgj.numberbox.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.NumberBox"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\sgj.edit.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.Edit"/>
+      </Item>
     </Files>
+    <i18n>
+      <EnableI18N Value="True"/>
+      <OutDir Value="languages"/>
+      <EnableI18NForLFM Value="True"/>
+    </i18n>
     <RequiredPkgs>
+      <Item>
+        <PackageName Value="bgracontrols"/>
+      </Item>
       <Item>
         <PackageName Value="IDEIntf"/>
       </Item>

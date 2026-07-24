@@ -754,6 +754,8 @@ procedure TSGJListView.SetGroupView(AValue: boolean);
 begin
   fGrupView := AValue;
   {$IfDef MSWindows}
+  if HandleAllocated then
+  begin
   if AValue = True then
   begin
     SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 1, 0);
@@ -761,6 +763,7 @@ begin
   end
   else
     SendMessage(self.Handle, LVM_ENABLEGROUPVIEW, 0, 0);
+  end;
   {$EndIf}
 end;
 
@@ -1301,6 +1304,8 @@ var
 begin
   fStyleName := AValue;
   {$IFDEF MSWINDOWS}
+  if HandleAllocated then
+  begin
   if fStyleName = snDefault then
   begin
     RemoveWindowSubclass(Handle, @ListViewWindowProcSubclassed, ID_SUB_LISTVIEW);
@@ -1329,6 +1334,7 @@ begin
     Color:=clWhite;
     Font.Color:=clBlack;
   end;
+  end;
   {$ENDIF}
 end;
 
@@ -1338,4 +1344,6 @@ initialization
 {$ENDIF}
 
 end.
+
+
 

@@ -200,7 +200,7 @@ begin
     with Canvas do begin
       Brush.Style := bsClear;
       Pen.Color:=self.BorderColor;
-      Pen.Width:=2;
+      Pen.Width:=1;
       Canvas.Font.Color := self.Font.Color;
       Canvas.font.Style:=self.Font.Style;
       Canvas.Font.Size:=self.Font.Size;

@@ -21,12 +21,12 @@ interface
 
 uses
   {$IFDEF FPC}
-  LCLType,LResources, LCLIntf,
+  LCLType,LResources, LCLIntf, LMessages,
   {$ELSE}
   Windows,
   {$ENDIF}
   Themes,
-  bgrabitmap, BGRABitmapTypes,
+  bgrabitmap, BGRABitmapTypes, Math,
   Classes, SysUtils, Controls, ExtCtrls, Graphics, Forms, Messages, Types, ImgList;
 
 type
@@ -92,8 +92,10 @@ type
     FIBackground: TBGRABitmap;
     FLastState: TButtonVisualState;
     FLastSize: TSize;
+    FShowFocus: boolean;
     procedure SetSubcaption(AValue: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure PaintButton();
+    procedure SetShowFocus(AFocus: boolean);
     procedure SetThemed(AValue: boolean);
     procedure DrawButtonArrow(ACanvas: TCanvas);
     procedure DrawThemedBackground();
@@ -109,6 +111,7 @@ type
     property ButtonHover: TSGJBtnState read fHover write fHover;
     property ButtonClicked: TSGJBtnState read fClicked write fClicked;
     property ButtonDisabled: TSGJBtnState read fDisabled write fDisabled;
+    property ShowFocus: boolean read FShowFocus write SetShowFocus;
   protected
     procedure AdjustSize; override;
     procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
@@ -121,11 +124,17 @@ type
     procedure Paint; override;
     procedure DoEnter; override;
     procedure DoExit; override;
+    procedure SetBounds(ALeft, ATop, AWidth, AHeight: Integer); override;
+    procedure AdjustClientRect(var ARect: TRect); override;
+    procedure CalculatePreferredSize(var PreferredWidth, PreferredHeight: Integer;
+    WithThemeSpace: Boolean); override;
+    procedure SetAlign(Value: TAlign); override;
   end;
 
 type
   TSGJButton = class(TCustomSGJButton)
   published
+    property ShowFocus;
     property ButtonArrow;
     property ButtonNormal;
     property ButtonHover;
@@ -143,7 +152,7 @@ type
     property Enabled;
     property AutoSize;
     property BidiMode;
-    //  property BorderSpacing;
+    property BorderSpacing;
     property Constraints;
     property DoubleBuffered;
     property DragCursor;
@@ -299,6 +308,34 @@ begin
   fDisabled.fColor := clGray;
   fDisabled.fFont.Color := clMedGray;
   ControlStyle := ControlStyle + [csAcceptsControls];
+
+   BorderSpacing.Around := 0;
+end;
+
+procedure TCustomSGJButton.SetBounds(ALeft, ATop, AWidth, AHeight: Integer);
+begin
+if csLoading in ComponentState then
+ begin
+   inherited SetBounds(ALeft, ATop, AWidth, AHeight);
+   Exit;
+ end;
+
+ { if Parent <> nil then
+  begin
+    ALeft  := ALeft  + BorderSpacing.Left;
+    ATop   := ATop   + BorderSpacing.Top;
+    AWidth := AWidth - (BorderSpacing.Left + BorderSpacing.Right);
+    AHeight:= AHeight- (BorderSpacing.Top  + BorderSpacing.Bottom);
+  end;
+  }
+  inherited SetBounds(ALeft, ATop, AWidth, AHeight);
+
+  if (csDesigning in ComponentState) and (Parent <> nil) then
+  begin
+    Invalidate;
+    // Opcjonalnie informujemy rodzica, że musi zaktualizować swoje wyrównanie
+    Parent.Perform(CM_INVALIDATE, 0, 0);
+  end;
 end;
 
 destructor TCustomSGJButton.Destroy;
@@ -321,6 +358,12 @@ begin
   end;
 end;
 
+procedure TCustomSGJButton.SetShowFocus(AFocus: boolean);
+begin
+  if fShowFocus<>AFocus then
+     fShowFocus:=AFocus;
+end;
+
 procedure TCustomSGJButton.SetThemed(AValue: boolean);
 begin
   if fThemed <> AValue then
@@ -335,13 +378,20 @@ begin
   inherited DoEnter;
   fGetFocus := True;
   Invalidate;
+  mouseMove([ssLeft],0,0);
 end;
 
 procedure TCustomSGJButton.DoExit();
+var
+  M: TMessage;
 begin
   inherited DoExit;
   fGetFocus := False;
   Invalidate;
+  M.Msg := WM_MOUSELEAVE;
+  M.WParam := 0;
+  M.LParam := 0;
+  MouseLeave(M);
 end;
 
 procedure TCustomSGJButton.MouseMove(Shift: TShiftState; X, Y: integer);
@@ -454,6 +504,7 @@ begin
           ColorToBGRA(ColorToRGB(ButtonState.ColorBorder)), 1);
     end;
 
+    if fShowFocus then
     if fGetFocus = True then
     begin
       FIBackground.JoinStyle := pjsBevel;
@@ -684,60 +735,74 @@ begin
     DrawButtonArrow(Canvas);
 end;
 
-procedure TCustomSGJButton.DrawButtonArrow(ACanvas: TCanvas);
+procedure DrawArrowUp(C: TCanvas; X, Y, Size: integer);
 var
-  OldFont: TFont;
-  AStyle: TTextStyle;
-  BtnSym: string;
-  R: TRect;
+  W, H: integer;
 begin
-  // zapamiętujemy czcionkę
-  OldFont := TFont.Create;
-  OldFont.Assign(ACanvas.Font);
+  Size := ScaleX(Size, 96);
 
-  // ustawienia stylu tekstu
-  AStyle := ACanvas.TextStyle;
-  AStyle.Alignment := taRightJustify;
-  AStyle.Layout := tlCenter;
-  AStyle.ShowPrefix := True;
+  W := Size;
 
-  // wybór symbolu
-  {$ifdef msWindows}
-  if Win32MajorVersion = 10 then
-  begin
-    if Win32BuildNumber >= 2200 then
-      ACanvas.Font.Name := 'Segoe Fluent Icons'
-    else
-      ACanvas.Font.Name := 'Segoe MDL2 Assets';
+  H := Size div 2;
 
-    case fButtonArrow of
-      baRight: BtnSym := widechar($E970);
-      baDown: BtnSym := widechar($E96E);
-      baUp: BtnSym := widechar($E96D);
-    end;
-  end
-  else
-  {$endif}
-  begin
-    case fButtonArrow of
-      baRight: BtnSym := '>';
-      baDown: BtnSym := '˅';
-      baUp: BtnSym := '˄';
-    end;
-  end;
+  C.Pen.Width := Max(1, ScaleX(1, 96));
 
-  ACanvas.Font.Size := ScaleX(8, 96);
-  ACanvas.Font.Color := ButtonState.Font.Color;
+  C.MoveTo(X - W, Y + H);
+  C.LineTo(X,     Y - H);
 
-  R := ClientRect;
-  R.Right := R.Right - 5;
-
-  ACanvas.TextRect(R, 0, 0, BtnSym, AStyle);
-
-  ACanvas.Font.Assign(OldFont);
-  OldFont.Free;
+  C.MoveTo(X + W, Y + H);
+  C.LineTo(X,     Y - H);
 end;
 
+
+procedure DrawArrowDown(C: TCanvas; X, Y, Size: integer);
+var
+  W, H: integer;
+begin
+  Size := ScaleX(Size, 96);
+
+  W := Size;
+  H := Size div 2;
+
+  C.Pen.Width := Max(1, ScaleX(1, 96));
+
+  C.MoveTo(X - W, Y - H);
+  C.LineTo(X,     Y + H);
+  C.MoveTo(X + W, Y - H);
+  C.LineTo(X,     Y + H);
+end;
+
+procedure DrawArrowRight(C: TCanvas; X, Y, Size: integer);
+var
+  W, H: integer;
+begin
+  Size := ScaleX(Size, 96);
+
+  // Dla strzałki w prawo:
+  // W to zasięg w poziomie (głębokość grotu)
+  // H to rozpiętość w pionie (skrzydła strzałki)
+  W := Size div 2;
+  H := Size;
+
+  C.Pen.Width := Max(1, ScaleX(1, 96));
+
+  // Rysujemy górne ramię do wierzchołka po prawej
+  C.MoveTo(X - W, Y - H);
+  C.LineTo(X + W, Y);
+
+  // Rysujemy dolne ramię do wierzchołka po prawej
+  C.MoveTo(X - W, Y + H);
+  C.LineTo(X + W, Y);
+end;
+
+procedure TCustomSGJButton.DrawButtonArrow(ACanvas: TCanvas);
+begin
+  case fButtonArrow of
+    baRight: DrawArrowRight(ACanvas, Width-ScaleX(13,96), Height div 2, 5);
+    baDown: DrawArrowDown(ACanvas, Width-ScaleX(13,96), Height div 2, 5);
+    baUp: DrawArrowUP(ACanvas, Width-ScaleX(13,96), Height div 2, 5);
+  end;
+end;
 
 procedure TCustomSGJButton.AdjustSize;
 var
@@ -745,28 +810,75 @@ var
   iWidth: integer = 0;
   IHeight: integer = 0;
 begin
-  if not HandleAllocated then Exit;
+  inherited AdjustSize;
+end;
+
+procedure TCustomSGJButton.CalculatePreferredSize(var PreferredWidth, PreferredHeight: Integer;
+  WithThemeSpace: Boolean);
+var
+  TextWidth, TextHeight: Integer;
+  iWidth: Integer = 0;
+  iHeight: Integer = 0;
+begin
+  inherited CalculatePreferredSize(PreferredWidth, PreferredHeight, WithThemeSpace);
+
   if (fNormal.fImages <> nil) and (fNormal.fImageIndex >= 0) and
     (fNormal.fImageIndex < fNormal.fImages.Count) then
   begin
     iWidth := fNormal.fImages.Width * Screen.PixelsPerInch div 96;
     iHeight := fNormal.fImages.Height * Screen.PixelsPerInch div 96;
   end;
+
   Canvas.Font.Assign(fNormal.Font);
   TextWidth := Canvas.TextWidth(Caption);
   TextHeight := Canvas.TextHeight(Caption);
+
   if fSubCaption <> '' then
   begin
     if Canvas.TextWidth(fSubCaption) > TextWidth then
       TextWidth := Canvas.TextWidth(fSubCaption);
     TextHeight := TextHeight + Canvas.TextHeight(fSubCaption);
   end;
-  if TextHeight < iHeight then TextHeight := iHeight;
-  // Add padding for button borders
-  if Autosize then
-    SetBounds(Left, Top, TextWidth + 20 + iWidth, TextHeight + 10);
 
+  if TextHeight < iHeight then
+    TextHeight := iHeight;
+
+  PreferredWidth := TextWidth + 20 + iWidth;
+  PreferredHeight := TextHeight + 10;
 end;
+
+
+procedure TCustomSGJButton.AdjustClientRect(var ARect: TRect);
+begin
+  inherited AdjustClientRect(ARect);
+
+  ARect.Left   := ARect.Left   + BorderSpacing.Left   + BorderSpacing.Around;
+  ARect.Top    := ARect.Top    + BorderSpacing.Top    + BorderSpacing.Around;
+  ARect.Right  := ARect.Right  - BorderSpacing.Right  - BorderSpacing.Around;
+  ARect.Bottom := ARect.Bottom - BorderSpacing.Bottom - BorderSpacing.Around;
+end;
+
+
+procedure TCustomSGJButton.SetAlign(Value: TAlign);
+begin
+  if Align <> Value then
+  begin
+    inherited SetAlign(Value);
+
+    if (csDesigning in ComponentState) then
+    begin
+      if Value in [alLeft, alRight] then
+        Width := 100;
+
+      if Value in [alTop, alBottom] then
+        Height := 40;
+
+      if Parent <> nil then
+        Parent.NotifyControls(CM_INVALIDATE);
+    end;
+  end;
+end;
+
 
 {$IFDEF FPC}
 initialization

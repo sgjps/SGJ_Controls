@@ -1,0 +1,55 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_cd
+msgid "CD-Rom"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_desktop
+msgid "Desktop"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_documents
+msgid "Documents"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_download
+msgid "Download"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_localdisk
+msgid "Local Disk"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_music
+msgid "Music"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_onedrive
+msgid "OneDrive"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_pictures
+msgid "Pictures"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_ramdisk
+msgid "Ramdisk"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_remote
+msgid "Remote"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_removable
+msgid "Removable"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_thispc
+msgid "This PC"
+msgstr ""
+
+#: sgj.shelltreeview.rs_sgjshelltreeview_videos
+msgid "Videos"
+msgstr ""
+

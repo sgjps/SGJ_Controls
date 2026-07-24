@@ -1,0 +1,23 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: sgj.shelllistview.rs_sgjshelltreeview_cd
+msgid "CD-Rom"
+msgstr ""
+
+#: sgj.shelllistview.rs_sgjshelltreeview_localdisk
+msgid "Local Disk"
+msgstr ""
+
+#: sgj.shelllistview.rs_sgjshelltreeview_ramdisk
+msgid "Ramdisk"
+msgstr ""
+
+#: sgj.shelllistview.rs_sgjshelltreeview_remote
+msgid "Remote"
+msgstr ""
+
+#: sgj.shelllistview.rs_sgjshelltreeview_removable
+msgid "Removable"
+msgstr ""
+

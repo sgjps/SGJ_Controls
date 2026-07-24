@@ -41,6 +41,7 @@ type
     fCenterTitle: boolean;
     fShowArrow: boolean;
     fGetFocus: boolean;
+    FShowFocus: boolean;
     procedure SetTitle(ATitle: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure SetDescription(ATitle: {$IFDEF FPC}TTranslateString{$ELSE}string{$ENDIF});
     procedure SetColor1(AColor: TColor);
@@ -53,6 +54,7 @@ type
     procedure SetArrow(AChecked: boolean);
     procedure PaintButtonBGRA(AMouseMove: boolean);
     procedure AdjustSize; override;
+     procedure SetShowFocus(AFocus: boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -70,6 +72,7 @@ type
     property RoundedCorners: boolean read fRoundedCorners write SetRoundedBorder;
     property TitleOnCenter: boolean read fCenterTitle write SetTitleOnCenter;
     property ShowArrow: boolean read fShowArrow write SetArrow;
+    property ShowFocus: boolean read FShowFocus write SetShowFocus;
   protected
     procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
     procedure MouseLeave(var Msg: TMessage); message CM_MouseLeave;
@@ -81,6 +84,7 @@ type
 type
   TSGJSimpleButton = class(TCustomSimpleSGJButton)
   published
+    property ShowFocus;
     property Description;
     property ColorNormal;
     property ColorHover;
@@ -147,6 +151,12 @@ implementation
 procedure Register;
 begin
   RegisterComponents('SGJ', [TSGJSimpleButton]);
+end;
+
+procedure TCustomSimpleSGJButton.SetShowFocus(AFocus: boolean);
+begin
+  if fShowFocus<>AFocus then
+     fShowFocus:=AFocus;
 end;
 
 procedure TCustomSimpleSGJButton.SetArrow(AChecked: boolean);
@@ -217,13 +227,20 @@ begin
   inherited DoEnter;
   fGetFocus := True;
   Invalidate;
+  mouseMove([ssLeft],0,0);
 end;
 
 procedure TCustomSimpleSGJButton.DoExit();
+var
+  M: TMessage;
 begin
   inherited DoExit;
   fGetFocus := False;
   Invalidate;
+  M.Msg := WM_MOUSELEAVE;
+  M.WParam := 0;
+  M.LParam := 0;
+  MouseLeave(M);
 end;
 
 procedure TCustomSimpleSGJButton.SetColor1(AColor: TColor);
@@ -242,8 +259,8 @@ begin
     fTitle := ATitle;
     if AutoSize then
     if HandleAllocated then
-      AdjustSize; // Recalculate size when caption changes
-    Invalidate; // Redraw
+      AdjustSize;
+    Invalidate;
   end;
 end;
 
@@ -316,6 +333,7 @@ begin
         fBorderColor), 1);
   end;
 
+  if fShowFocus then
   if fGetFocus = True then
   begin
     image.JoinStyle := pjsBevel;
@@ -339,7 +357,7 @@ begin
     fImages.DrawForPPI(Canvas,8,(Height div 2) - (iHeight div 2),fImageIndex,fimages.Width,
     Screen.PixelsPerInch,1.0,true);
 
-    // Tekst obok obrazka
+
     if not fShowDescription then
     begin
       Canvas.TextOut(
@@ -430,7 +448,7 @@ begin
   TextHeight:=TextHeight+Canvas.TextHeight(fDesc);
   end;
   if TextHeight<iHeight then TextHeight:=iHeight;
-  // Add padding for button borders
+
   if Autosize then
   SetBounds(Left, Top, TextWidth + 20+iWidth, TextHeight + 10);
 end;

@@ -1,7 +1,7 @@
 {
-This file is part of SGJ Controls for Delphi and Lazarus     
-home page : https://www.hiperapps.com 
-email     : sgj@sgjps.com  
+This file is part of SGJ Controls for Delphi and Lazarus
+home page : https://www.hiperapps.com
+email     : sgj@sgjps.com
 
 date      : 2026/02/16
 }
@@ -56,22 +56,30 @@ type
     fAnimTimer: TTimer;
     fAnimTarget: integer;
     fAnimStep: integer;
+    fExpandedHeight: integer;
+    fIsAnimating:boolean;
     procedure AnimTimerTick(Sender: TObject);
     procedure StartAnimation(TargetHeight: integer);
     procedure SetCollapsed(AValue: boolean);
     procedure HeaderClick(Sender: TObject);
+    procedure SetExpandedHeight(AValue: integer);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure SetBounds(ALeft, ATop, AWidth, AHeight: integer); override;
   protected
     procedure Loaded; override;
     procedure Paint; override;
     procedure Resize; override;
+    procedure DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy; const AXProportion, AYProportion: Double); override;
+
+
   published
     property HeaderButton: THeaderSGJButton read fHeaderButton;
     property ClientArea: TSGJEPClientArea read fClientAreaSettings
       write fClientAreaSettings;
     property Collapsed: boolean read fCollapsed write SetCollapsed;
+    property ExpandedSize: integer read fExpandedHeight write SetExpandedHeight;
     // property BorderStyle;
     property Font;
     property OnClick;
@@ -152,7 +160,6 @@ constructor TSGJExpandPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  // Set default width and height
   with GetControlClassDefaultSize do
     SetInitialBounds(0, 0, CX, CY);
 
@@ -177,6 +184,7 @@ begin
   fClientAreaSettings.Background := clDefault;
   fClientAreaSettings.BorderColor := clDefault;
 
+
   fHeaderButton.ButtonArrow := baDown;
 
   fAnimTimer := TTimer.Create(Self);
@@ -200,20 +208,16 @@ end;
 
 procedure TSGJExpandPanel.Loaded;
 begin
-  inherited;
-  fHeight := Height;
+  inherited Loaded;
 
   if csDesigning in ComponentState then
     Exit;
 
-  if fCollapsed then
-    Height := fHeaderButton.Height
-  else
-    Height := fHeight;
+
+
+
+
 end;
-
-
-
 
 
 procedure TSGJExpandPanel.Paint;
@@ -225,6 +229,8 @@ begin
     Canvas.RoundRect(0, fHeaderButton.Height + 3, Width, Height, 10, 10)
   else
     Canvas.Rectangle(0, fHeaderButton.Height + 3, Width, Height);
+
+
 end;
 
 procedure TSGJExpandPanel.SetCollapsed(AValue: boolean);
@@ -232,20 +238,26 @@ begin
   if fCollapsed = AValue then Exit;
   fCollapsed := AValue;
 
-  // DESIGN TIME: do NOT collapse visually
-  if csDesigning in ComponentState then
-    Exit;
 
-  // RUNTIME: collapse/expand with animation
+  if HandleAllocated then
+  begin
   if fCollapsed then
   begin
-    StartAnimation(fHeaderButton.Height);
+    if not (csDesigning in ComponentState) then
+    StartAnimation(HeaderButton.Height)
+    else
+      Height:=HeaderButton.Height;
     fHeaderButton.ButtonArrow := baDown;
   end
   else
   begin
-    StartAnimation(fHeight);
+    if not (csDesigning in ComponentState) then
+    StartAnimation(fExpandedHeight)
+    else
+      Height:=fExpandedHeight;
     fHeaderButton.ButtonArrow := baUp;
+  end;
+
   end;
 end;
 
@@ -273,9 +285,9 @@ begin
   fAnimTarget := TargetHeight;
 
   if TargetHeight > Height then
-    fAnimStep := 20
+    fAnimStep := 50
   else
-    fAnimStep := -20;
+    fAnimStep := -50;
 
   fAnimTimer.Enabled := True;
 end;
@@ -285,6 +297,32 @@ begin
   inherited Resize;
   if not fCollapsed then
     fHeight := Height;
+end;
+
+procedure TSGJExpandPanel.SetExpandedHeight(AValue: integer);
+begin
+  if (fExpandedHeight = AValue) then
+      exit;
+
+  fExpandedHeight:=AValue;
+end;
+
+procedure TSGJExpandPanel.SetBounds(ALeft, ATop, AWidth, AHeight: integer);
+begin
+  inherited SetBounds(ALeft, ATop, AWidth, AHeight);
+
+  if not Collapsed and (ComponentState * [csLoading] = []) then
+    FExpandedHeight := Height;
+end;
+
+procedure TSGJExpandPanel.DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy;const  AXProportion, AYProportion: Double);
+begin
+  inherited DoAutoAdjustLayout(AMode, AXProportion, AYProportion);
+
+  if AMode in [lapAutoAdjustForDPI, lapAutoAdjustWithoutHorizontalScrolling] then
+  begin
+    fExpandedHeight := Round(fExpandedHeight * AYProportion);
+  end;
 end;
 
 {$IFDEF FPC}
