@@ -77,7 +77,7 @@
       </Item>
       <Item>
         <Filename Value="..\src\sgj.titlebarctrls.pas"/>
-        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="SGJ.TitleBarCtrls"/>
       </Item>
       <Item>
@@ -92,12 +92,12 @@
       </Item>
       <Item>
         <Filename Value="..\src\SGJ.ToogleButton.pas"/>
-        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="SGJ.ToogleButton"/>
       </Item>
       <Item>
         <Filename Value="..\src\SGJ.ShellListView.pas"/>
-        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="SGJ.ShellListView"/>
       </Item>
       <Item>

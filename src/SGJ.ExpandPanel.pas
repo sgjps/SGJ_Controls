@@ -17,8 +17,8 @@ uses
 
 type
   THeaderSGJButton = class(TCustomSGJButton)
-    protected
-      procedure KeyDown(var Key: word; Shift: TShiftState); override;
+  protected
+    procedure KeyDown(var Key: word; Shift: TShiftState); override;
   published
     property ButtonArrow;
     property ButtonNormal;
@@ -57,7 +57,7 @@ type
     fAnimTarget: integer;
     fAnimStep: integer;
     fExpandedHeight: integer;
-    fIsAnimating:boolean;
+    fIsAnimating: boolean;
     procedure AnimTimerTick(Sender: TObject);
     procedure StartAnimation(TargetHeight: integer);
     procedure SetCollapsed(AValue: boolean);
@@ -71,7 +71,8 @@ type
     procedure Loaded; override;
     procedure Paint; override;
     procedure Resize; override;
-    procedure DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy; const AXProportion, AYProportion: Double); override;
+    procedure DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy;
+      const AXProportion, AYProportion: double); override;
 
 
   published
@@ -153,7 +154,7 @@ begin
     TSGJExpandPanel(Parent).Collapsed := not TSGJExpandPanel(Parent).Collapsed;
     Exit;
   end;
-    inherited KeyDown(Key, Shift);
+  inherited KeyDown(Key, Shift);
 end;
 
 constructor TSGJExpandPanel.Create(AOwner: TComponent);
@@ -177,7 +178,7 @@ begin
   fHeaderButton.SetSubComponent(True);
   fHeaderButton.Align := alTop;
   fHeaderButton.ControlStyle :=
-  fHeaderButton.ControlStyle - [csNoDesignSelectable] + [csAcceptsControls];
+    fHeaderButton.ControlStyle - [csNoDesignSelectable] + [csAcceptsControls];
   fHeaderButton.OnClick := @HeaderClick;
 
   fClientAreaSettings := TSGJEPClientArea.Create(self);
@@ -213,10 +214,6 @@ begin
   if csDesigning in ComponentState then
     Exit;
 
-
-
-
-
 end;
 
 
@@ -230,7 +227,6 @@ begin
   else
     Canvas.Rectangle(0, fHeaderButton.Height + 3, Width, Height);
 
-
 end;
 
 procedure TSGJExpandPanel.SetCollapsed(AValue: boolean);
@@ -241,26 +237,25 @@ begin
 
   if HandleAllocated then
   begin
-  if fCollapsed then
-  begin
-    if not (csDesigning in ComponentState) then
-    StartAnimation(HeaderButton.Height)
+    if fCollapsed then
+    begin
+      if not (csDesigning in ComponentState) then
+        StartAnimation(HeaderButton.Height)
+      else
+        Height := HeaderButton.Height;
+      fHeaderButton.ButtonArrow := baDown;
+    end
     else
-      Height:=HeaderButton.Height;
-    fHeaderButton.ButtonArrow := baDown;
-  end
-  else
-  begin
-    if not (csDesigning in ComponentState) then
-    StartAnimation(fExpandedHeight)
-    else
-      Height:=fExpandedHeight;
-    fHeaderButton.ButtonArrow := baUp;
-  end;
+    begin
+      if not (csDesigning in ComponentState) then
+        StartAnimation(fExpandedHeight)
+      else
+        Height := fExpandedHeight;
+      fHeaderButton.ButtonArrow := baUp;
+    end;
 
   end;
 end;
-
 
 
 procedure TSGJExpandPanel.AnimTimerTick(Sender: TObject);
@@ -302,9 +297,9 @@ end;
 procedure TSGJExpandPanel.SetExpandedHeight(AValue: integer);
 begin
   if (fExpandedHeight = AValue) then
-      exit;
+    exit;
 
-  fExpandedHeight:=AValue;
+  fExpandedHeight := AValue;
 end;
 
 procedure TSGJExpandPanel.SetBounds(ALeft, ATop, AWidth, AHeight: integer);
@@ -315,7 +310,8 @@ begin
     FExpandedHeight := Height;
 end;
 
-procedure TSGJExpandPanel.DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy;const  AXProportion, AYProportion: Double);
+procedure TSGJExpandPanel.DoAutoAdjustLayout(const AMode: TLayoutAdjustmentPolicy;
+  const AXProportion, AYProportion: double);
 begin
   inherited DoAutoAdjustLayout(AMode, AXProportion, AYProportion);
 
