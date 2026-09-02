@@ -9,7 +9,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\src;D:\FPCUPdeluxe44\SGJ_Controls\"/>
+        <OtherUnitFiles Value="..\src;D:\FPCUPdeluxe44\SGJ_Controls"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <CodeGeneration>
@@ -23,7 +23,7 @@
         </Debugging>
       </Linking>
     </CompilerOptions>
-    <Version Major="2" Minor="1" Release="2607"/>
+    <Version Major="2" Minor="2" Release="2609"/>
     <Files>
       <Item>
         <Filename Value="..\src\SGJ.LinkLabel.pas"/>
@@ -76,11 +76,6 @@
         <UnitName Value="SGJ.Win32Extension"/>
       </Item>
       <Item>
-        <Filename Value="..\src\sgj.titlebarctrls.pas"/>
-        <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="SGJ.TitleBarCtrls"/>
-      </Item>
-      <Item>
         <Filename Value="..\src\SGJ.CalendarView.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.CalendarView"/>
@@ -101,14 +96,19 @@
         <UnitName Value="SGJ.ShellListView"/>
       </Item>
       <Item>
-        <Filename Value="..\src\sgj.numberbox.pas"/>
-        <HasRegisterProc Value="True"/>
-        <UnitName Value="SGJ.NumberBox"/>
+        <Filename Value="..\src\SGJ.TitleBarCtrls.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="SGJ.TitleBarCtrls"/>
       </Item>
       <Item>
-        <Filename Value="..\src\sgj.edit.pas"/>
+        <Filename Value="..\src\SGJ.Edit.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.Edit"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\SGJ.NumberBox.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.NumberBox"/>
       </Item>
     </Files>
     <i18n>

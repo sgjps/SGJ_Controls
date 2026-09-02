@@ -197,10 +197,16 @@ begin
   FVisualOpt.OnChange := @OnColorChange;
 
   TabStop := True;
-  Height := ScaleX(16, 96);
   Width := 150;
+  {$ifdef UNIX}
+  Height := ScaleX(23, 96);
+  Constraints.MaxHeight := ScaleX(23, 96);
+  Constraints.MinHeight := ScaleX(23, 96);
+  {$else}
+  Height := ScaleX(16, 96);
   Constraints.MaxHeight := ScaleX(16, 96);
   Constraints.MinHeight := ScaleX(16, 96);
+  {$Endif}
   FVisualOpt.ColorInner := clWhite;
   FVisualOpt.ColorOuter := clBlack;
   FVisualOpt.ColorDisabled := clGray;

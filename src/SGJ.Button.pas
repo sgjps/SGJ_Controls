@@ -320,20 +320,11 @@ if csLoading in ComponentState then
    Exit;
  end;
 
- { if Parent <> nil then
-  begin
-    ALeft  := ALeft  + BorderSpacing.Left;
-    ATop   := ATop   + BorderSpacing.Top;
-    AWidth := AWidth - (BorderSpacing.Left + BorderSpacing.Right);
-    AHeight:= AHeight- (BorderSpacing.Top  + BorderSpacing.Bottom);
-  end;
-  }
   inherited SetBounds(ALeft, ATop, AWidth, AHeight);
 
   if (csDesigning in ComponentState) and (Parent <> nil) then
   begin
     Invalidate;
-    // Opcjonalnie informujemy rodzica, że musi zaktualizować swoje wyrównanie
     Parent.Perform(CM_INVALIDATE, 0, 0);
   end;
 end;
@@ -739,13 +730,13 @@ procedure DrawArrowUp(C: TCanvas; X, Y, Size: integer);
 var
   W, H: integer;
 begin
-  Size := ScaleX(Size, 96);
+  Size := Round(ScaleX(Size, 96));
+  if Size < 6 then Size := 6;
 
   W := Size;
-
   H := Size div 2;
 
-  C.Pen.Width := Max(1, ScaleX(1, 96));
+  C.Pen.Width := Max(2, Round(ScaleX(1, 96)));
 
   C.MoveTo(X - W, Y + H);
   C.LineTo(X,     Y - H);
@@ -755,45 +746,46 @@ begin
 end;
 
 
+
 procedure DrawArrowDown(C: TCanvas; X, Y, Size: integer);
 var
   W, H: integer;
 begin
-  Size := ScaleX(Size, 96);
+  Size := Round(ScaleX(Size, 96));
+  if Size < 6 then Size := 6;
 
   W := Size;
   H := Size div 2;
 
-  C.Pen.Width := Max(1, ScaleX(1, 96));
+  C.Pen.Width := Max(2, Round(ScaleX(1, 96)));
 
   C.MoveTo(X - W, Y - H);
   C.LineTo(X,     Y + H);
+
   C.MoveTo(X + W, Y - H);
   C.LineTo(X,     Y + H);
 end;
+
 
 procedure DrawArrowRight(C: TCanvas; X, Y, Size: integer);
 var
   W, H: integer;
 begin
-  Size := ScaleX(Size, 96);
+  Size := Round(ScaleX(Size, 96));
+  if Size < 6 then Size := 6;
 
-  // Dla strzałki w prawo:
-  // W to zasięg w poziomie (głębokość grotu)
-  // H to rozpiętość w pionie (skrzydła strzałki)
   W := Size div 2;
   H := Size;
 
-  C.Pen.Width := Max(1, ScaleX(1, 96));
+  C.Pen.Width := Max(2, Round(ScaleX(1, 96)));
 
-  // Rysujemy górne ramię do wierzchołka po prawej
   C.MoveTo(X - W, Y - H);
   C.LineTo(X + W, Y);
 
-  // Rysujemy dolne ramię do wierzchołka po prawej
   C.MoveTo(X - W, Y + H);
   C.LineTo(X + W, Y);
 end;
+
 
 procedure TCustomSGJButton.DrawButtonArrow(ACanvas: TCanvas);
 begin

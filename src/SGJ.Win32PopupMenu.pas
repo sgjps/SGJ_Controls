@@ -15,7 +15,7 @@ This file is part of SGJ Controls
 *****************************************************************************
 }
 
-unit SGJ.Win32popupMenu;
+unit SGJ.Win32PopupMenu;
 
 {$mode ObjFPC}{$H+}
 
@@ -415,6 +415,7 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF MSWINDOWS}
 procedure TSGJWin32Menu.UnhookAllControls(AHooks: TList);
 var i: Integer;
 begin
@@ -422,6 +423,7 @@ begin
   TObject(AHooks[i]).Free;
   AHooks.Clear;
 end;
+{$ENDIF}
 
 destructor TSGJWin32Menu.Destroy;
 var

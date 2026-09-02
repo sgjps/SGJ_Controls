@@ -85,7 +85,9 @@ type
     fFormHandle: THandle;
     fOwner:TSGJWin32Ex;
     procedure SetDarkTitleBar(AValue: boolean);
+    {$IFDEF MSWINDOWS}
     function SetDarkModeForTitleBar(hWnd: HWND; DarkMode: Bool): integer;
+    {$ENDIF}
   public
     constructor Create(AHandle: THandle; AOwner: TSGJWin32Ex);
   published
