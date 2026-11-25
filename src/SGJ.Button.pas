@@ -857,19 +857,13 @@ begin
   begin
     inherited SetAlign(Value);
 
-    if (csDesigning in ComponentState) then
+    if (csDesigning in ComponentState) and (Parent <> nil) then
     begin
-      if Value in [alLeft, alRight] then
-        Width := 100;
-
-      if Value in [alTop, alBottom] then
-        Height := 40;
-
-      if Parent <> nil then
-        Parent.NotifyControls(CM_INVALIDATE);
+      Parent.NotifyControls(CM_INVALIDATE);
     end;
   end;
 end;
+
 
 
 {$IFDEF FPC}

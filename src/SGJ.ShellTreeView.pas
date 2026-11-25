@@ -58,7 +58,6 @@ type
     procedure SetPath(AValue: string);
   protected
     procedure DoCreateNodeClass(var NewNodeClass: TTreeNodeClass); override;
-    procedure GetSelectedIndex(Node: TTreeNode);override;
     procedure Expand(Node: TTreeNode);override;
     //procedure Click; override;
     procedure Change(Node: TTreeNode);override;
@@ -175,22 +174,15 @@ procedure Register;
 begin
   RegisterComponents('SGJ', [TSGJShellTreeView]);
 end;
-{
-procedure TSGJShellTreeView.Click;
-begin
-  inherited;
-  If ShellListView<>nil
-  then
-  if Path<>'' then
-  ShellListView.Root:= Path;
-end; }
+
 procedure TSGJShellTreeView.Change(Node: TTreeNode);
 begin
   inherited;
-  If ShellListView<>nil
-  then
-  if Path<>'' then
-  ShellListView.Root:= Path;
+  if Assigned(Node) and (Node is TSGJTreeShellNode) then
+    FPath := TSGJTreeShellNode(Node).APath;
+
+  if (ShellListView <> nil) and (FPath <> '') then
+    ShellListView.Root := FPath;
 end;
 procedure TSGJShellTreeView.Expand(Node: TTreeNode);
 begin
@@ -199,17 +191,16 @@ begin
     end;
     inherited;
 end;
-procedure TSGJShellTreeView.GetSelectedIndex(Node: TTreeNode);
-begin
-    Fpath:=TSGJTreeShellNode(Node).APath;
-    inherited;
-end;
+
 procedure TSGJShellTreeView.SetPath(AValue: string);
 begin
-  {$IFDEF UNIX}
-   AValue:='/'+AValue.Replace('/','\');
-  {$ENDIF}
-   OpenNodeByPath(self,AValue,'\');
+     {$IFDEF UNIX}
+    if AValue.StartsWith('/') then
+       AValue := '/' + AValue.Substring(1).Replace('/', '\')
+     else
+       AValue := AValue.Replace('/', '\');
+    {$ENDIF}
+     OpenNodeByPath(self, AValue, '\');
 end;
 
 procedure TSGJShellTreeView.OpenNodeByPath(TreeView: TTreeView; const Path: string; Separator: Char = '\');
@@ -219,6 +210,7 @@ var
   Part: string;
   Drive: Char;
   APath: string;
+  LastFoundNode: TTreeNode;
 begin
   {$IFDEF MSWINDOWS}
   if Path.Contains(':\') then begin
@@ -233,6 +225,7 @@ begin
   PathParts := APath.Split([Separator]);
   Node := TreeView.Items.GetFirstNode;
 
+  LastFoundNode := nil;
   for Part in PathParts do
   begin
     while Assigned(Node) and (Node.Text <> Part) do
@@ -241,13 +234,13 @@ begin
     if not Assigned(Node) then
       Exit; // Path not found
 
+    LastFoundNode := Node;
     Node.Expand(False); // Expand the current node
     Node := Node.GetFirstChild; // Move to the next level
   end;
 
-  if Assigned(Node) then
-    TreeView.Selected := Node.Parent; // Select the final node
-
+   if Assigned(LastFoundNode) then
+    TreeView.Selected := LastFoundNode;
 end;
 
 procedure TSGJShellTreeView.DoCreateNodeClass(var NewNodeClass: TTreeNodeClass);
@@ -406,8 +399,8 @@ begin
         begin
           ChildNode := TreeView.Items.AddChild(Node, SearchRec.Name);
           ChildNode.HasChildren :=CheckIfSubDirsExists(IncludeTrailingPathDelimiter(FolderPath + SearchRec.Name));
-          TSGJTreeShellNode(ChildNode).APath:=FolderPath+IncludeTrailingPathDelimiter(SearchRec.Name);
-          APath:= FolderPath+SearchRec.Name;
+          APath := IncludeTrailingPathDelimiter(FolderPath + SearchRec.Name);
+          TSGJTreeShellNode(ChildNode).APath := APath;
           {$IFDEF MSWINDOWS}
           LoadIcons(unicodestring(APath),fIconsList);
                       ChildNode.ImageIndex:=fIconsList.Count-1;

@@ -6,7 +6,7 @@ interface
 
 uses
   LResources, Classes, SysUtils, Controls, Forms, StdCtrls, Graphics, LCLType, Types, LCLIntf,
-  Buttons, bcbutton, bctypes, bgrabitmap, bgrabitmaptypes, math;
+  Buttons, bcbutton, bctypes, bgrabitmap, bgrabitmaptypes, math, PropEdits ;
 
 type
   TSGJBorderStyle = (ebsNone, ebsNormal, ebsRoundedCorner);
@@ -14,6 +14,7 @@ type
 
   TSGJNumberBox = class(TCustomControl)
   private
+    FValue: integer;
     FMin: integer;
     FMax: integer;
     FEdit: TEdit;
@@ -184,12 +185,16 @@ constructor TSGJNumberBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  FMin := 0;
+  FMax := 100;
+  FValue := 0;
+
   Width := 140;
   Height := 23;
 
   FBorderColor := clBlack;
   FBorderStyle := ebsNormal;
-  FAlignment := taLeftJustify;
+  FAlignment := taRightJustify;
 
   AutoSize := True;
 
@@ -198,44 +203,47 @@ begin
   FEdit.Align := alClient;
   FEdit.BorderStyle := bsNone;
   FEdit.BorderSpacing.Around := 4;
-  FEdit.NumbersOnly := true;
+  FEdit.NumbersOnly := True;
+
+  FEdit.ReadOnly := csDesigning in ComponentState;
+  FEdit.Text := '0';
+
   FEdit.OnKeyDown := @EditKeyDown;
   FEdit.OnChange := @EditChange;
-
-  Alignment:=taRightJustify;
 
   FBMin := TBCButton.Create(Self);
   FBMin.Parent := Self;
   FBMin.Align := alRight;
-  FBMin.BorderSpacing.Top:=3;
-  FBMin.BorderSpacing.Bottom:=3;
-  FBMin.BorderSpacing.Right:=3;
-  FBMin.Width:=40;
-  FBMin.Rounding.RoundX:=5;
-  FBMin.Rounding.Roundy:=5;
-  FBMin.StateNormal.Background.style:=bbsColor;
-  FBMin.StateNormal.Background.Color:=Color;
-  FBMin.StateClicked.Background.style:=bbsColor;
-  FBMin.StateHover.Background.style:=bbsColor;
-  FBMin.OnAfterRenderBCButton:=@AfterRenderMin;
-  FBMin.OnClick:=@ClickMin;
+  FBMin.BorderSpacing.Top := 3;
+  FBMin.BorderSpacing.Bottom := 3;
+  FBMin.BorderSpacing.Right := 3;
+  FBMin.Width := 40;
+  FBMin.Rounding.RoundX := 5;
+  FBMin.Rounding.RoundY := 5;
+  FBMin.StateNormal.Background.style := bbsColor;
+  FBMin.StateNormal.Background.Color := Color;
+  FBMin.StateClicked.Background.style := bbsColor;
+  FBMin.StateHover.Background.style := bbsColor;
+  FBMin.OnAfterRenderBCButton := @AfterRenderMin;
+  FBMin.OnClick := @ClickMin;
 
   FBMax := TBCButton.Create(Self);
   FBMax.Parent := Self;
   FBMax.Align := alRight;
-  FBMax.BorderSpacing.Top:=3;
-  FBMax.BorderSpacing.Bottom:=3;
-  FBMax.BorderSpacing.Right:=3;
-  FBMax.Width:=40;
-  FBMax.Rounding.RoundX:=5;
-  FBMax.Rounding.Roundy:=5;
-  FBMax.StateNormal.Background.style:=bbsColor;
-  FBMax.StateNormal.Background.Color:=Color;
-  FBMax.StateClicked.Background.style:=bbsColor;
-  FBMax.StateHover.Background.style:=bbsColor;
-  FBMax.OnAfterRenderBCButton:=@AfterRenderMax;
-  FBMax.OnClick:=@ClickMax;
+  FBMax.BorderSpacing.Top := 3;
+  FBMax.BorderSpacing.Bottom := 3;
+  FBMax.BorderSpacing.Right := 3;
+  FBMax.Width := 40;
+  FBMax.Rounding.RoundX := 5;
+  FBMax.Rounding.RoundY := 5;
+  FBMax.StateNormal.Background.style := bbsColor;
+  FBMax.StateNormal.Background.Color := Color;
+  FBMax.StateClicked.Background.style := bbsColor;
+  FBMax.StateHover.Background.style := bbsColor;
+  FBMax.OnAfterRenderBCButton := @AfterRenderMax;
+  FBMax.OnClick := @ClickMax;
 end;
+
 
 procedure TSGJNumberBox.ClickMin(Sender: TObject);
 begin
@@ -317,15 +325,28 @@ end;
 
 procedure TSGJNumberBox.SetMin(AValue: integer);
 begin
-  if FMin<>AValue then
-  FMin:=AValue;
+  if FMin <> AValue then
+  begin
+    FMin := AValue;
+
+    if not (csLoading in ComponentState) and not (csReading in ComponentState) then
+    begin
+      if FValue < FMin then
+        SetText(FMin);
+    end;
+  end;
 end;
 
 procedure TSGJNumberBox.SetMax(AValue: integer);
 begin
-  if FMax<>AValue then
-  FMax:=AValue;
+  if FMax <> AValue then
+  begin
+    FMax := AValue;
+    if not (csLoading in ComponentState) and (FValue > FMax) then
+      SetText(FMax);
+  end;
 end;
+
 
 procedure TSGJNumberBox.Loaded;
 begin
@@ -345,6 +366,10 @@ begin
   FBMax.StateHover.Background.Color:=AutoAdjustColor(Color,-20);
   FBMax.StateClicked.Background.Color:=AutoAdjustColor(Color,-40);
 
+  if FEdit <> nil then
+  begin
+    FEdit.Text := IntToStr(FValue);
+  end;
 end;
 
 procedure TSGJNumberBox.Resize;
@@ -378,30 +403,58 @@ begin
 end;
 
 procedure TSGJNumberBox.EditChange(Sender: TObject);
-begin
-  if Assigned(FOnChange) then
-    FOnChange(Self);
-end;
-
-function TSGJNumberBox.GetText: integer;
-begin
-  if TryStrToInt(FEdit.Text, Result) then
-    Exit;
-
-  Result := FMin;
-end;
-
-procedure TSGJNumberBox.SetText(const AValue: integer);
 var
   V: Integer;
 begin
-  V := AValue;
+  if FEdit.Text = '' then
+    V := FMin
+  else
+    V := StrToInt(FEdit.Text);
 
   if V < FMin then V := FMin;
   if V > FMax then V := FMax;
 
-  FEdit.Text := IntToStr(V);
+  if FValue <> V then
+  begin
+    FValue := V;
+    if Assigned(FOnChange) then
+      FOnChange(Self);
+  end;
 end;
+
+
+
+
+function TSGJNumberBox.GetText: integer;
+begin
+  Result := FValue;
+end;
+
+procedure TSGJNumberBox.SetText(const AValue: integer);
+var
+  NewVal: Integer;
+begin
+  NewVal := AValue;
+
+  if not (csLoading in ComponentState) and not (csReading in ComponentState) then
+  begin
+    if NewVal < FMin then NewVal := FMin;
+    if NewVal > FMax then NewVal := FMax;
+  end;
+
+  if FValue <> NewVal then
+  begin
+    FValue := NewVal;
+
+    if FEdit <> nil then
+      FEdit.Text := IntToStr(FValue);
+
+    if Assigned(FOnChange) and not (csLoading in ComponentState) then
+      FOnChange(Self);
+  end;
+end;
+
+
 
 function TSGJNumberBox.GetReadOnly: Boolean;
 begin

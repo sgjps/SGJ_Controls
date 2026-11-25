@@ -9,7 +9,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\src;D:\FPCUPdeluxe44\SGJ_Controls"/>
+        <OtherUnitFiles Value="..\src;D:\FPCUPdeluxe44\SGJ_Controls\"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <CodeGeneration>
@@ -109,6 +109,16 @@
         <Filename Value="..\src\SGJ.NumberBox.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="SGJ.NumberBox"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\sgj.infopanel.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.InfoPanel"/>
+      </Item>
+      <Item>
+        <Filename Value="..\src\sgj.personpicture.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="SGJ.PersonPicture"/>
       </Item>
     </Files>
     <i18n>

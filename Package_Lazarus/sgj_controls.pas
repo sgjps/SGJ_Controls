@@ -11,7 +11,7 @@ uses
   SGJ.LinkLabel, SGJ.Button, SGJ.SimpleButton, SGJ.CheckBox, SGJ.Panel, 
   SGJ.ShellTreeView, SGJ.ListView, SGJListViewPropEdit, SGJ.Win32PopupMenu, 
   SGJ.Win32Extension, SGJ.CalendarView, SGJ.ExpandPanel, SGJ.Edit, 
-  SGJ.NumberBox, LazarusPackageIntf;
+  SGJ.NumberBox, SGJ.InfoPanel, SGJ.PersonPicture, LazarusPackageIntf;
 
 implementation
 
@@ -30,6 +30,8 @@ begin
   RegisterUnit('SGJ.ExpandPanel', @SGJ.ExpandPanel.Register);
   RegisterUnit('SGJ.Edit', @SGJ.Edit.Register);
   RegisterUnit('SGJ.NumberBox', @SGJ.NumberBox.Register);
+  RegisterUnit('SGJ.InfoPanel', @SGJ.InfoPanel.Register);
+  RegisterUnit('SGJ.PersonPicture', @SGJ.PersonPicture.Register);
 end;
 
 initialization

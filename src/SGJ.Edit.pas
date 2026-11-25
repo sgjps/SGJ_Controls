@@ -18,7 +18,7 @@ type
     FBorderColor: TColor;
     FBorderStyle: TSGJBorderStyle;
     FAlignment: TSGJAlignment;
-
+    FTextHint: string;
     function GetText: string;
     procedure SetText(const AValue: string);
 
@@ -39,6 +39,10 @@ type
     procedure SetAlignment(AValue: TSGJAlignment);
     procedure ApplyAlignment;
 
+    function GetTextHint: string;
+    procedure SetTextHint(const AValue: string);
+
+
   protected
     procedure Paint; override;
     procedure Resize; override;
@@ -57,7 +61,7 @@ type
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly default False;
     property PasswordChar: Char read GetPasswordChar write SetPasswordChar default #0;
     property NumbersOnly: Boolean read GetNumbersOnly write SetNumbersOnly default False;
-
+    property TextHint: string read GetTextHint write SetTextHint;
     property Alignment: TSGJAlignment read FAlignment write SetAlignment default taLeftJustify;
 
     property BorderColor: TColor read FBorderColor write SetBorderColor default clBlack;
@@ -114,6 +118,7 @@ begin
   FEdit.Align := alClient;
   FEdit.BorderStyle := bsNone;
   FEdit.BorderSpacing.Around := 4;
+  FTextHint := '';
 
   FEdit.OnChange := @EditChange;
 end;
@@ -138,6 +143,7 @@ begin
       Color := clWhite;
 
   FEdit.Color := Color;
+  FEdit.TextHint := FTextHint;
   ApplyAlignment;
 end;
 
@@ -275,6 +281,18 @@ begin
   if FAlignment = AValue then Exit;
   FAlignment := AValue;
   ApplyAlignment;
+end;
+
+procedure TSGJEdit.SetTextHint(const AValue: string);
+begin
+  if FTextHint = AValue then Exit;
+  FTextHint := AValue;
+  FEdit.TextHint := AValue;
+end;
+
+function TSGJEdit.GetTextHint: string;
+begin
+  Result := FTextHint;
 end;
 
 procedure TSGJEdit.ApplyAlignment;

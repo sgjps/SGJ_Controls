@@ -37,10 +37,12 @@ type
           fBorderColor: TColor;
 	  fShowBorder: boolean;
           fCaptionPos: TSGJPnPos;
+          fInnerColor: TColor;
           procedure SetCaption(ACaption: TTranslateString);
           procedure SetBorder(ABorder: boolean);
           procedure SetBorderColor(AColor: TColor);
           procedure SetCaptionPos(AValue: TSGJPnPos);
+          procedure SetInnerColor(AColor: TColor);
   protected
   public
           constructor Create(AOwner: TComponent); override;
@@ -51,6 +53,7 @@ type
           property TitlePosition: TSGJPnPos read fCaptionPos write SetCaptionPos;
           property BorderColor: TColor read fBorderColor write SetBorderColor default $00B16300;
 	  property BorderEnabled: boolean read fShowBorder write SetBorder default false;
+          property InnerColor: TColor read fInnerColor write SetInnerColor default clNone;
           property Align;
           property Alignment;
           property Anchors;
@@ -155,6 +158,15 @@ begin
   end;
 end;
 
+procedure TSGJPanel.SetInnerColor(AColor: TColor);
+begin
+  if fInnerColor<>AColor then
+  begin
+     fInnerColor:=AColor;
+     Invalidate();
+  end;
+end;
+
 procedure TSGJPanel.SetCaption(ACaption: TTranslateString);
 begin
   if fTitle<>ACaption then
@@ -191,6 +203,7 @@ begin
   Width:=60;
   ParentBackground:=true;
   BorderColor:=$00B16300;
+  InnerColor:=clNone;
 end;
 
 procedure TSGJPanel.Paint();
@@ -208,9 +221,14 @@ begin
       Canvas.Brush.Color:=self.Color;
 
 
+
       if fShowBorder then
 	 if fTitle='' then
-            Canvas.RoundRect(2,2,Self.width-2,Self.height-2,8,8)
+         begin
+            if InnerColor<>clNone  then
+            Canvas.Brush.Color:=self.InnerColor;
+            Canvas.RoundRect(2,2,Self.width-2,Self.height-2,8,8);
+         end
 	  else
           if fCaptionPos <>poBottom then
             Canvas.RoundRect(2,(TextHeight(fTitle)div 2),Self.Width-2,Self.Height-2,8,8)
